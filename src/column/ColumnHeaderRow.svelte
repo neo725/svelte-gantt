@@ -13,7 +13,6 @@
 
   export let columnWidth
   $: {
-    debugger
     const offset = header.offset || 1
     const duration = momentDuration(offset, header.unit).asMilliseconds()
     const ratio = duration / baseDuration
