@@ -2035,7 +2035,7 @@ function get_each_context(ctx, list, i) {
 	return child_ctx;
 }
 
-// (93:2) {#each _headers as _header}
+// (92:2) {#each _headers as _header}
 function create_each_block(ctx) {
 	let div1;
 	let div0;
@@ -2181,7 +2181,6 @@ function instance$4($$self, $$props, $$invalidate) {
 	$$self.$$.update = () => {
 		if ($$self.$$.dirty & /*header, baseDuration, baseWidth*/ 385) {
 			 {
-				debugger;
 				const offset = header.offset || 1;
 				const duration$1 = duration(offset, header.unit).asMilliseconds();
 				const ratio = duration$1 / baseDuration;
