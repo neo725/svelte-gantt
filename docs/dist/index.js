@@ -2942,7 +2942,7 @@ function get_each_context_5(ctx, list, i) {
 	return child_ctx;
 }
 
-// (741:2) {#each ganttTableModules as module}
+// (739:2) {#each ganttTableModules as module}
 function create_each_block_5(ctx) {
 	let t;
 	let current;
@@ -3386,6 +3386,7 @@ function create_fragment$8(ctx) {
 	let each4_lookup = new Map();
 	let t6;
 	let div7_resize_listener;
+	let div8_class_value;
 	let div9_class_value;
 	let current;
 	let mounted;
@@ -3531,7 +3532,7 @@ function create_fragment$8(ctx) {
 			attr(div7, "class", "sg-timeline-body svelte-1ny10s5");
 			add_render_callback(() => /*div7_elementresize_handler*/ ctx[120].call(div7));
 			toggle_class(div7, "zooming", /*zooming*/ ctx[14]);
-			attr(div8, "class", "sg-timeline sg-view svelte-1ny10s5");
+			attr(div8, "class", div8_class_value = "sg-timeline sg-view rows-count-" + /*visibleRows*/ ctx[19].length + " svelte-1ny10s5");
 			toggle_class(div8, "sg-timeline-rows-0", /*noVisibleRows*/ ctx[21]);
 			attr(div9, "class", div9_class_value = "sg-gantt " + /*classes*/ ctx[4] + " svelte-1ny10s5");
 			toggle_class(div9, "sg-disable-transition", !/*disableTransition*/ ctx[22]);
@@ -3725,7 +3726,11 @@ function create_fragment$8(ctx) {
 				toggle_class(div7, "zooming", /*zooming*/ ctx[14]);
 			}
 
-			if (dirty[0] & /*noVisibleRows*/ 2097152) {
+			if (!current || dirty[0] & /*visibleRows*/ 524288 && div8_class_value !== (div8_class_value = "sg-timeline sg-view rows-count-" + /*visibleRows*/ ctx[19].length + " svelte-1ny10s5")) {
+				attr(div8, "class", div8_class_value);
+			}
+
+			if (dirty[0] & /*visibleRows, noVisibleRows*/ 2621440) {
 				toggle_class(div8, "sg-timeline-rows-0", /*noVisibleRows*/ ctx[21]);
 			}
 
@@ -4569,9 +4574,7 @@ function instance$8($$self, $$props, $$invalidate) {
 		}
 
 		if ($$self.$$.dirty[0] & /*visibleRows*/ 524288) {
-			 {
-				if (visibleRows.length == 0) $$invalidate(21, noVisibleRows = true);
-			}
+			 $$invalidate(21, noVisibleRows = visibleRows.length == 0);
 		}
 
 		if ($$self.$$.dirty[3] & /*$dimensionsChanged*/ 32) {

@@ -650,9 +650,7 @@
   }
 
   let noVisibleRows = false
-  $: {
-    if (visibleRows.length == 0) noVisibleRows = true
-  }
+  $: noVisibleRows = visibleRows.length == 0
 
   let disableTransition = true
   $: if ($dimensionsChanged) tickWithoutCSSTransition()
@@ -752,7 +750,9 @@
     <Resizer x={tableWidth} on:resize={onResize} container={ganttElement} />
   {/each}
 
-  <div class="sg-timeline sg-view" class:sg-timeline-rows-0={noVisibleRows}>
+  <div
+    class="sg-timeline sg-view rows-count-{visibleRows.length}"
+    class:sg-timeline-rows-0={noVisibleRows}>
     <div
       class="sg-header"
       bind:this={mainHeaderContainer}
