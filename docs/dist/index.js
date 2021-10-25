@@ -7,11 +7,6 @@ function assign(tar, src) {
         tar[k] = src[k];
     return tar;
 }
-function add_location(element, file, line, column, char) {
-    element.__svelte_meta = {
-        loc: { file, line, column, char }
-    };
-}
 function run(fn) {
     return fn();
 }
@@ -26,11 +21,6 @@ function is_function(thing) {
 }
 function safe_not_equal(a, b) {
     return a != a ? b == b : a !== b || ((a && typeof a === 'object') || typeof a === 'function');
-}
-function validate_store(store, name) {
-    if (store != null && typeof store.subscribe !== 'function') {
-        throw new Error(`'${name}' is not a store with a 'subscribe' method`);
-    }
 }
 function subscribe(store, ...callbacks) {
     if (store == null) {
@@ -152,6 +142,11 @@ function attr(node, attribute, value) {
 function children(element) {
     return Array.from(element.childNodes);
 }
+function set_data(text, data) {
+    data = '' + data;
+    if (text.data !== data)
+        text.data = data;
+}
 function set_style(node, key, value, important) {
     node.style.setProperty(key, value, important ? 'important' : '');
 }
@@ -258,14 +253,8 @@ function get_current_component() {
         throw new Error(`Function called outside component initialization`);
     return current_component;
 }
-function beforeUpdate(fn) {
-    get_current_component().$$.before_update.push(fn);
-}
 function onMount(fn) {
     get_current_component().$$.on_mount.push(fn);
-}
-function afterUpdate(fn) {
-    get_current_component().$$.after_update.push(fn);
 }
 function onDestroy(fn) {
     get_current_component().$$.on_destroy.push(fn);
@@ -403,12 +392,6 @@ function transition_out(block, local, detach, callback) {
         block.o(local);
     }
 }
-
-const globals = (typeof window !== 'undefined'
-    ? window
-    : typeof globalThis !== 'undefined'
-        ? globalThis
-        : global);
 function outro_and_destroy_block(block, lookup) {
     transition_out(block, 1, 1, () => {
         lookup.delete(block.key);
@@ -488,16 +471,6 @@ function update_keyed_each(old_blocks, dirty, get_key, dynamic, ctx, list, looku
     while (n)
         insert(new_blocks[n - 1]);
     return new_blocks;
-}
-function validate_each_keys(ctx, list, get_context, get_key) {
-    const keys = new Set();
-    for (let i = 0; i < list.length; i++) {
-        const key = get_key(get_context(ctx, list, i));
-        if (keys.has(key)) {
-            throw new Error(`Cannot have duplicate keys in a keyed each`);
-        }
-        keys.add(key);
-    }
 }
 
 function get_spread_update(levels, updates) {
@@ -651,81 +624,6 @@ class SvelteComponent {
     $set() {
         // overridden by instance, if it has props
     }
-}
-
-function dispatch_dev(type, detail) {
-    document.dispatchEvent(custom_event(type, Object.assign({ version: '3.23.0' }, detail)));
-}
-function append_dev(target, node) {
-    dispatch_dev("SvelteDOMInsert", { target, node });
-    append(target, node);
-}
-function insert_dev(target, node, anchor) {
-    dispatch_dev("SvelteDOMInsert", { target, node, anchor });
-    insert(target, node, anchor);
-}
-function detach_dev(node) {
-    dispatch_dev("SvelteDOMRemove", { node });
-    detach(node);
-}
-function listen_dev(node, event, handler, options, has_prevent_default, has_stop_propagation) {
-    const modifiers = options === true ? ["capture"] : options ? Array.from(Object.keys(options)) : [];
-    if (has_prevent_default)
-        modifiers.push('preventDefault');
-    if (has_stop_propagation)
-        modifiers.push('stopPropagation');
-    dispatch_dev("SvelteDOMAddEventListener", { node, event, handler, modifiers });
-    const dispose = listen(node, event, handler, options);
-    return () => {
-        dispatch_dev("SvelteDOMRemoveEventListener", { node, event, handler, modifiers });
-        dispose();
-    };
-}
-function attr_dev(node, attribute, value) {
-    attr(node, attribute, value);
-    if (value == null)
-        dispatch_dev("SvelteDOMRemoveAttribute", { node, attribute });
-    else
-        dispatch_dev("SvelteDOMSetAttribute", { node, attribute, value });
-}
-function set_data_dev(text, data) {
-    data = '' + data;
-    if (text.data === data)
-        return;
-    dispatch_dev("SvelteDOMSetData", { node: text, data });
-    text.data = data;
-}
-function validate_each_argument(arg) {
-    if (typeof arg !== 'string' && !(arg && typeof arg === 'object' && 'length' in arg)) {
-        let msg = '{#each} only iterates over array-like objects.';
-        if (typeof Symbol === 'function' && arg && Symbol.iterator in arg) {
-            msg += ' You can use a spread to convert this iterable into an array.';
-        }
-        throw new Error(msg);
-    }
-}
-function validate_slots(name, slot, keys) {
-    for (const slot_key of Object.keys(slot)) {
-        if (!~keys.indexOf(slot_key)) {
-            console.warn(`<${name}> received an unexpected slot "${slot_key}".`);
-        }
-    }
-}
-class SvelteComponentDev extends SvelteComponent {
-    constructor(options) {
-        if (!options || (!options.target && !options.$$inline)) {
-            throw new Error(`'target' is a required option`);
-        }
-        super();
-    }
-    $destroy() {
-        super.$destroy();
-        this.$destroy = () => {
-            console.warn(`Component was already destroyed`); // eslint-disable-line no-console
-        };
-    }
-    $capture_state() { }
-    $inject_state() { }
 }
 
 const subscriber_queue = [];
@@ -981,36 +879,7 @@ function addEventListenerOnce(target, type, listener, addOptions, removeOptions)
 function setCursor(cursor, node = document.body) {
     node.style.cursor = cursor;
 }
-function debounce(func, wait, immediate) {
-    var timeout;
-    return function () {
-        var context = this, args = arguments;
-        var later = function () {
-            timeout = null;
-            if (!immediate)
-                func.apply(context, args);
-        };
-        var callNow = immediate && !timeout;
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-        if (callNow)
-            func.apply(context, args);
-    };
-}
-function throttle(func, limit) {
-    var wait = false;
-    return function () {
-        if (!wait) {
-            func.apply(null, arguments);
-            wait = true;
-            setTimeout(function () {
-                wait = false;
-            }, limit);
-        }
-    };
-}
 
-const H_SCROLLBAR_WIDTH = 17;
 const MIN_DRAG_X = 2;
 const MIN_DRAG_Y = 2;
 
@@ -1254,42 +1123,29 @@ function reflectTask(task, row, options) {
     return Object.assign(Object.assign({}, task), { model, top: row.y + options.rowPadding, reflected: true, reflectedOnParent: false, reflectedOnChild: true, originalId: task.model.id });
 }
 
-/* src\entities\Task.svelte generated by Svelte v3.23.0 */
-const file = "src\\entities\\Task.svelte";
+/* src/entities/Task.svelte generated by Svelte v3.23.0 */
 
-// (310:2) {#if model.amountDone}
 function create_if_block_4(ctx) {
 	let div;
 
-	const block = {
-		c: function create() {
+	return {
+		c() {
 			div = element("div");
-			attr_dev(div, "class", "sg-task-background svelte-1vy5zmj");
+			attr(div, "class", "sg-task-background svelte-7lktx7");
 			set_style(div, "width", /*model*/ ctx[0].amountDone + "%");
-			add_location(div, file, 310, 2, 9482);
 		},
-		m: function mount(target, anchor) {
-			insert_dev(target, div, anchor);
+		m(target, anchor) {
+			insert(target, div, anchor);
 		},
-		p: function update(ctx, dirty) {
+		p(ctx, dirty) {
 			if (dirty[0] & /*model*/ 1) {
 				set_style(div, "width", /*model*/ ctx[0].amountDone + "%");
 			}
 		},
-		d: function destroy(detaching) {
-			if (detaching) detach_dev(div);
+		d(detaching) {
+			if (detaching) detach(div);
 		}
 	};
-
-	dispatch_dev("SvelteRegisterBlock", {
-		block,
-		id: create_if_block_4.name,
-		type: "if",
-		source: "(310:2) {#if model.amountDone}",
-		ctx
-	});
-
-	return block;
 }
 
 // (318:4) {:else}
@@ -1297,61 +1153,41 @@ function create_else_block(ctx) {
 	let t_value = /*model*/ ctx[0].label + "";
 	let t;
 
-	const block = {
-		c: function create() {
+	return {
+		c() {
 			t = text(t_value);
 		},
-		m: function mount(target, anchor) {
-			insert_dev(target, t, anchor);
+		m(target, anchor) {
+			insert(target, t, anchor);
 		},
-		p: function update(ctx, dirty) {
-			if (dirty[0] & /*model*/ 1 && t_value !== (t_value = /*model*/ ctx[0].label + "")) set_data_dev(t, t_value);
+		p(ctx, dirty) {
+			if (dirty[0] & /*model*/ 1 && t_value !== (t_value = /*model*/ ctx[0].label + "")) set_data(t, t_value);
 		},
-		d: function destroy(detaching) {
-			if (detaching) detach_dev(t);
+		d(detaching) {
+			if (detaching) detach(t);
 		}
 	};
-
-	dispatch_dev("SvelteRegisterBlock", {
-		block,
-		id: create_else_block.name,
-		type: "else",
-		source: "(318:4) {:else}",
-		ctx
-	});
-
-	return block;
 }
 
 // (316:26) 
 function create_if_block_3(ctx) {
 	let html_tag;
-	let raw_value = /*taskContent*/ ctx[9](/*model*/ ctx[0]) + "";
+	let raw_value = /*taskContent*/ ctx[8](/*model*/ ctx[0]) + "";
 
-	const block = {
-		c: function create() {
+	return {
+		c() {
 			html_tag = new HtmlTag(null);
 		},
-		m: function mount(target, anchor) {
+		m(target, anchor) {
 			html_tag.m(raw_value, target, anchor);
 		},
-		p: function update(ctx, dirty) {
-			if (dirty[0] & /*model*/ 1 && raw_value !== (raw_value = /*taskContent*/ ctx[9](/*model*/ ctx[0]) + "")) html_tag.p(raw_value);
+		p(ctx, dirty) {
+			if (dirty[0] & /*model*/ 1 && raw_value !== (raw_value = /*taskContent*/ ctx[8](/*model*/ ctx[0]) + "")) html_tag.p(raw_value);
 		},
-		d: function destroy(detaching) {
+		d(detaching) {
 			if (detaching) html_tag.d();
 		}
 	};
-
-	dispatch_dev("SvelteRegisterBlock", {
-		block,
-		id: create_if_block_3.name,
-		type: "if",
-		source: "(316:26) ",
-		ctx
-	});
-
-	return block;
 }
 
 // (314:4) {#if model.html}
@@ -1359,30 +1195,20 @@ function create_if_block_2(ctx) {
 	let html_tag;
 	let raw_value = /*model*/ ctx[0].html + "";
 
-	const block = {
-		c: function create() {
+	return {
+		c() {
 			html_tag = new HtmlTag(null);
 		},
-		m: function mount(target, anchor) {
+		m(target, anchor) {
 			html_tag.m(raw_value, target, anchor);
 		},
-		p: function update(ctx, dirty) {
+		p(ctx, dirty) {
 			if (dirty[0] & /*model*/ 1 && raw_value !== (raw_value = /*model*/ ctx[0].html + "")) html_tag.p(raw_value);
 		},
-		d: function destroy(detaching) {
+		d(detaching) {
 			if (detaching) html_tag.d();
 		}
 	};
-
-	dispatch_dev("SvelteRegisterBlock", {
-		block,
-		id: create_if_block_2.name,
-		type: "if",
-		source: "(314:4) {#if model.html}",
-		ctx
-	});
-
-	return block;
 }
 
 // (320:4) {#if model.showButton}
@@ -1393,43 +1219,32 @@ function create_if_block_1(ctx) {
 	let mounted;
 	let dispose;
 
-	const block = {
-		c: function create() {
+	return {
+		c() {
 			span = element("span");
-			attr_dev(span, "class", span_class_value = "sg-task-button " + /*model*/ ctx[0].buttonClasses + " svelte-1vy5zmj");
-			add_location(span, file, 320, 6, 9860);
+			attr(span, "class", span_class_value = "sg-task-button " + /*model*/ ctx[0].buttonClasses + " svelte-7lktx7");
 		},
-		m: function mount(target, anchor) {
-			insert_dev(target, span, anchor);
+		m(target, anchor) {
+			insert(target, span, anchor);
 			span.innerHTML = raw_value;
 
 			if (!mounted) {
-				dispose = listen_dev(span, "click", /*onclick*/ ctx[3], false, false, false);
+				dispose = listen(span, "click", /*onclick*/ ctx[3]);
 				mounted = true;
 			}
 		},
-		p: function update(ctx, dirty) {
+		p(ctx, dirty) {
 			if (dirty[0] & /*model*/ 1 && raw_value !== (raw_value = /*model*/ ctx[0].buttonHtml + "")) span.innerHTML = raw_value;
-			if (dirty[0] & /*model*/ 1 && span_class_value !== (span_class_value = "sg-task-button " + /*model*/ ctx[0].buttonClasses + " svelte-1vy5zmj")) {
-				attr_dev(span, "class", span_class_value);
+			if (dirty[0] & /*model*/ 1 && span_class_value !== (span_class_value = "sg-task-button " + /*model*/ ctx[0].buttonClasses + " svelte-7lktx7")) {
+				attr(span, "class", span_class_value);
 			}
 		},
-		d: function destroy(detaching) {
-			if (detaching) detach_dev(span);
+		d(detaching) {
+			if (detaching) detach(span);
 			mounted = false;
 			dispose();
 		}
 	};
-
-	dispatch_dev("SvelteRegisterBlock", {
-		block,
-		id: create_if_block_1.name,
-		type: "if",
-		source: "(320:4) {#if model.showButton}",
-		ctx
-	});
-
-	return block;
 }
 
 // (327:2) {#if model.labelBottom}
@@ -1438,34 +1253,23 @@ function create_if_block(ctx) {
 	let t_value = /*model*/ ctx[0].labelBottom + "";
 	let t;
 
-	const block = {
-		c: function create() {
+	return {
+		c() {
 			label = element("label");
 			t = text(t_value);
-			attr_dev(label, "class", "sg-label-bottom svelte-1vy5zmj");
-			add_location(label, file, 327, 4, 10035);
+			attr(label, "class", "sg-label-bottom svelte-7lktx7");
 		},
-		m: function mount(target, anchor) {
-			insert_dev(target, label, anchor);
-			append_dev(label, t);
+		m(target, anchor) {
+			insert(target, label, anchor);
+			append(label, t);
 		},
-		p: function update(ctx, dirty) {
-			if (dirty[0] & /*model*/ 1 && t_value !== (t_value = /*model*/ ctx[0].labelBottom + "")) set_data_dev(t, t_value);
+		p(ctx, dirty) {
+			if (dirty[0] & /*model*/ 1 && t_value !== (t_value = /*model*/ ctx[0].labelBottom + "")) set_data(t, t_value);
 		},
-		d: function destroy(detaching) {
-			if (detaching) detach_dev(label);
+		d(detaching) {
+			if (detaching) detach(label);
 		}
 	};
-
-	dispatch_dev("SvelteRegisterBlock", {
-		block,
-		id: create_if_block.name,
-		type: "if",
-		source: "(327:2) {#if model.labelBottom}",
-		ctx
-	});
-
-	return block;
 }
 
 function create_fragment(ctx) {
@@ -1482,7 +1286,7 @@ function create_fragment(ctx) {
 
 	function select_block_type(ctx, dirty) {
 		if (/*model*/ ctx[0].html) return create_if_block_2;
-		if (/*taskContent*/ ctx[9]) return create_if_block_3;
+		if (/*taskContent*/ ctx[8]) return create_if_block_3;
 		return create_else_block;
 	}
 
@@ -1491,8 +1295,8 @@ function create_fragment(ctx) {
 	let if_block2 = /*model*/ ctx[0].showButton && create_if_block_1(ctx);
 	let if_block3 = /*model*/ ctx[0].labelBottom && create_if_block(ctx);
 
-	const block = {
-		c: function create() {
+	return {
+		c() {
 			div1 = element("div");
 			if (if_block0) if_block0.c();
 			t0 = space();
@@ -1502,39 +1306,34 @@ function create_fragment(ctx) {
 			if (if_block2) if_block2.c();
 			t2 = space();
 			if (if_block3) if_block3.c();
-			attr_dev(div0, "class", "sg-task-content svelte-1vy5zmj");
-			add_location(div0, file, 312, 2, 9563);
-			attr_dev(div1, "data-task-id", div1_data_task_id_value = /*model*/ ctx[0].id);
-			attr_dev(div1, "class", div1_class_value = "sg-task " + /*model*/ ctx[0].classes + " svelte-1vy5zmj");
+			attr(div0, "class", "sg-task-content svelte-7lktx7");
+			attr(div1, "data-task-id", div1_data_task_id_value = /*model*/ ctx[0].id);
+			attr(div1, "class", div1_class_value = "sg-task " + /*model*/ ctx[0].classes + " svelte-7lktx7");
 			set_style(div1, "width", /*_position*/ ctx[6].width + "px");
 			set_style(div1, "height", /*height*/ ctx[1] + "px");
 			set_style(div1, "transform", "translate(" + /*_position*/ ctx[6].x + "px, " + /*_position*/ ctx[6].y + "px)");
 			toggle_class(div1, "moving", /*_dragging*/ ctx[4] || /*_resizing*/ ctx[5]);
 			toggle_class(div1, "selected", /*selected*/ ctx[7]);
-			toggle_class(div1, "animating", /*animating*/ ctx[8]);
+			toggle_class(div1, "animating", animating);
 			toggle_class(div1, "sg-task-reflected", /*reflected*/ ctx[2]);
-			add_location(div1, file, 300, 0, 9141);
 		},
-		l: function claim(nodes) {
-			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
-		},
-		m: function mount(target, anchor) {
-			insert_dev(target, div1, anchor);
+		m(target, anchor) {
+			insert(target, div1, anchor);
 			if (if_block0) if_block0.m(div1, null);
-			append_dev(div1, t0);
-			append_dev(div1, div0);
+			append(div1, t0);
+			append(div1, div0);
 			if_block1.m(div0, null);
-			append_dev(div0, t1);
+			append(div0, t1);
 			if (if_block2) if_block2.m(div0, null);
-			append_dev(div1, t2);
+			append(div1, t2);
 			if (if_block3) if_block3.m(div1, null);
 
 			if (!mounted) {
-				dispose = action_destroyer(ctx[11].call(null, div1));
+				dispose = action_destroyer(ctx[10].call(null, div1));
 				mounted = true;
 			}
 		},
-		p: function update(ctx, dirty) {
+		p(ctx, dirty) {
 			if (/*model*/ ctx[0].amountDone) {
 				if (if_block0) {
 					if_block0.p(ctx, dirty);
@@ -1587,11 +1386,11 @@ function create_fragment(ctx) {
 			}
 
 			if (dirty[0] & /*model*/ 1 && div1_data_task_id_value !== (div1_data_task_id_value = /*model*/ ctx[0].id)) {
-				attr_dev(div1, "data-task-id", div1_data_task_id_value);
+				attr(div1, "data-task-id", div1_data_task_id_value);
 			}
 
-			if (dirty[0] & /*model*/ 1 && div1_class_value !== (div1_class_value = "sg-task " + /*model*/ ctx[0].classes + " svelte-1vy5zmj")) {
-				attr_dev(div1, "class", div1_class_value);
+			if (dirty[0] & /*model*/ 1 && div1_class_value !== (div1_class_value = "sg-task " + /*model*/ ctx[0].classes + " svelte-7lktx7")) {
+				attr(div1, "class", div1_class_value);
 			}
 
 			if (dirty[0] & /*_position*/ 64) {
@@ -1614,8 +1413,8 @@ function create_fragment(ctx) {
 				toggle_class(div1, "selected", /*selected*/ ctx[7]);
 			}
 
-			if (dirty[0] & /*model, animating*/ 257) {
-				toggle_class(div1, "animating", /*animating*/ ctx[8]);
+			if (dirty[0] & /*model*/ 1) {
+				toggle_class(div1, "animating", animating);
 			}
 
 			if (dirty[0] & /*model, reflected*/ 5) {
@@ -1624,8 +1423,8 @@ function create_fragment(ctx) {
 		},
 		i: noop,
 		o: noop,
-		d: function destroy(detaching) {
-			if (detaching) detach_dev(div1);
+		d(detaching) {
+			if (detaching) detach(div1);
 			if (if_block0) if_block0.d();
 			if_block1.d();
 			if (if_block2) if_block2.d();
@@ -1634,34 +1433,23 @@ function create_fragment(ctx) {
 			dispose();
 		}
 	};
-
-	dispatch_dev("SvelteRegisterBlock", {
-		block,
-		id: create_fragment.name,
-		type: "component",
-		source: "",
-		ctx
-	});
-
-	return block;
 }
+
+let animating = true;
 
 function instance($$self, $$props, $$invalidate) {
 	let $rowStore;
 	let $taskStore;
 	let $rowPadding;
 	let $selection;
-	validate_store(rowStore, "rowStore");
-	component_subscribe($$self, rowStore, $$value => $$invalidate(17, $rowStore = $$value));
-	validate_store(taskStore, "taskStore");
-	component_subscribe($$self, taskStore, $$value => $$invalidate(18, $taskStore = $$value));
+	component_subscribe($$self, rowStore, $$value => $$invalidate(16, $rowStore = $$value));
+	component_subscribe($$self, taskStore, $$value => $$invalidate(17, $taskStore = $$value));
 	let { model } = $$props;
 	let { height } = $$props;
 	let { left } = $$props;
 	let { top } = $$props;
 	let { width } = $$props;
 	let { reflected = false } = $$props;
-	let animating = true;
 	let _dragging = false;
 	let _resizing = false;
 	let _position = { x: left, y: top, width };
@@ -1677,8 +1465,7 @@ function instance($$self, $$props, $$invalidate) {
 	const { dimensionsChanged } = getContext("dimensions");
 	const { rowContainer } = getContext("gantt");
 	const { taskContent, resizeHandleWidth, rowPadding, onTaskButtonClick, reflectOnParentRows, reflectOnChildRows } = getContext("options");
-	validate_store(rowPadding, "rowPadding");
-	component_subscribe($$self, rowPadding, value => $$invalidate(19, $rowPadding = value));
+	component_subscribe($$self, rowPadding, value => $$invalidate(18, $rowPadding = value));
 	const { dndManager, api, utils, selectionManager, columnService } = getContext("services");
 
 	function drag(node) {
@@ -1813,105 +1600,29 @@ function instance($$self, $$props, $$invalidate) {
 	}
 
 	let selection = selectionManager.selection;
-	validate_store(selection, "selection");
-	component_subscribe($$self, selection, value => $$invalidate(20, $selection = value));
+	component_subscribe($$self, selection, value => $$invalidate(19, $selection = value));
 	let selected = false;
 	let row;
-	const writable_props = ["model", "height", "left", "top", "width", "reflected"];
-
-	Object.keys($$props).forEach(key => {
-		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console.warn(`<Task> was created with unknown prop '${key}'`);
-	});
-
-	let { $$slots = {}, $$scope } = $$props;
-	validate_slots("Task", $$slots, []);
 
 	$$self.$set = $$props => {
 		if ("model" in $$props) $$invalidate(0, model = $$props.model);
 		if ("height" in $$props) $$invalidate(1, height = $$props.height);
-		if ("left" in $$props) $$invalidate(13, left = $$props.left);
-		if ("top" in $$props) $$invalidate(14, top = $$props.top);
-		if ("width" in $$props) $$invalidate(15, width = $$props.width);
+		if ("left" in $$props) $$invalidate(12, left = $$props.left);
+		if ("top" in $$props) $$invalidate(13, top = $$props.top);
+		if ("width" in $$props) $$invalidate(14, width = $$props.width);
 		if ("reflected" in $$props) $$invalidate(2, reflected = $$props.reflected);
 	};
-
-	$$self.$capture_state = () => ({
-		beforeUpdate,
-		afterUpdate,
-		getContext,
-		onMount,
-		onDestroy,
-		tick,
-		setCursor,
-		taskStore,
-		rowStore,
-		Draggable,
-		reflectTask,
-		model,
-		height,
-		left,
-		top,
-		width,
-		reflected,
-		animating,
-		_dragging,
-		_resizing,
-		_position,
-		updatePosition,
-		dimensionsChanged,
-		rowContainer,
-		taskContent,
-		resizeHandleWidth,
-		rowPadding,
-		onTaskButtonClick,
-		reflectOnParentRows,
-		reflectOnChildRows,
-		dndManager,
-		api,
-		utils,
-		selectionManager,
-		columnService,
-		drag,
-		onclick,
-		selection,
-		selected,
-		row,
-		$rowStore,
-		$taskStore,
-		$rowPadding,
-		$selection
-	});
-
-	$$self.$inject_state = $$props => {
-		if ("model" in $$props) $$invalidate(0, model = $$props.model);
-		if ("height" in $$props) $$invalidate(1, height = $$props.height);
-		if ("left" in $$props) $$invalidate(13, left = $$props.left);
-		if ("top" in $$props) $$invalidate(14, top = $$props.top);
-		if ("width" in $$props) $$invalidate(15, width = $$props.width);
-		if ("reflected" in $$props) $$invalidate(2, reflected = $$props.reflected);
-		if ("animating" in $$props) $$invalidate(8, animating = $$props.animating);
-		if ("_dragging" in $$props) $$invalidate(4, _dragging = $$props._dragging);
-		if ("_resizing" in $$props) $$invalidate(5, _resizing = $$props._resizing);
-		if ("_position" in $$props) $$invalidate(6, _position = $$props._position);
-		if ("selection" in $$props) $$invalidate(12, selection = $$props.selection);
-		if ("selected" in $$props) $$invalidate(7, selected = $$props.selected);
-		if ("row" in $$props) row = $$props.row;
-	};
-
-	if ($$props && "$$inject" in $$props) {
-		$$self.$inject_state($$props.$$inject);
-	}
 
 	$$self.$$.update = () => {
-		if ($$self.$$.dirty[0] & /*left, top, width*/ 57344) {
+		if ($$self.$$.dirty[0] & /*left, top, width*/ 28672) {
 			 updatePosition(left, top, width);
 		}
 
-		if ($$self.$$.dirty[0] & /*$selection, model*/ 1048577) {
+		if ($$self.$$.dirty[0] & /*$selection, model*/ 524289) {
 			 $$invalidate(7, selected = $selection.indexOf(model.id) !== -1);
 		}
 
-		if ($$self.$$.dirty[0] & /*$rowStore, model*/ 131073) {
+		if ($$self.$$.dirty[0] & /*$rowStore, model*/ 65537) {
 			 row = $rowStore.entities[model.resourceId];
 		}
 	};
@@ -1925,7 +1636,6 @@ function instance($$self, $$props, $$invalidate) {
 		_resizing,
 		_position,
 		selected,
-		animating,
 		taskContent,
 		rowPadding,
 		drag,
@@ -1936,9 +1646,9 @@ function instance($$self, $$props, $$invalidate) {
 	];
 }
 
-class Task extends SvelteComponentDev {
+class Task extends SvelteComponent {
 	constructor(options) {
-		super(options);
+		super();
 
 		init(
 			this,
@@ -1949,135 +1659,41 @@ class Task extends SvelteComponentDev {
 			{
 				model: 0,
 				height: 1,
-				left: 13,
-				top: 14,
-				width: 15,
+				left: 12,
+				top: 13,
+				width: 14,
 				reflected: 2,
 				onclick: 3
 			},
 			[-1, -1]
 		);
-
-		dispatch_dev("SvelteRegisterComponent", {
-			component: this,
-			tagName: "Task",
-			options,
-			id: create_fragment.name
-		});
-
-		const { ctx } = this.$$;
-		const props = options.props || {};
-
-		if (/*model*/ ctx[0] === undefined && !("model" in props)) {
-			console.warn("<Task> was created without expected prop 'model'");
-		}
-
-		if (/*height*/ ctx[1] === undefined && !("height" in props)) {
-			console.warn("<Task> was created without expected prop 'height'");
-		}
-
-		if (/*left*/ ctx[13] === undefined && !("left" in props)) {
-			console.warn("<Task> was created without expected prop 'left'");
-		}
-
-		if (/*top*/ ctx[14] === undefined && !("top" in props)) {
-			console.warn("<Task> was created without expected prop 'top'");
-		}
-
-		if (/*width*/ ctx[15] === undefined && !("width" in props)) {
-			console.warn("<Task> was created without expected prop 'width'");
-		}
-	}
-
-	get model() {
-		throw new Error("<Task>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set model(value) {
-		throw new Error("<Task>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get height() {
-		throw new Error("<Task>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set height(value) {
-		throw new Error("<Task>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get left() {
-		throw new Error("<Task>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set left(value) {
-		throw new Error("<Task>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get top() {
-		throw new Error("<Task>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set top(value) {
-		throw new Error("<Task>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get width() {
-		throw new Error("<Task>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set width(value) {
-		throw new Error("<Task>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get reflected() {
-		throw new Error("<Task>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set reflected(value) {
-		throw new Error("<Task>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
 	}
 
 	get onclick() {
 		return this.$$.ctx[3];
 	}
-
-	set onclick(value) {
-		throw new Error("<Task>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
 }
 
-/* src\entities\Row.svelte generated by Svelte v3.23.0 */
-const file$1 = "src\\entities\\Row.svelte";
+/* src/entities/Row.svelte generated by Svelte v3.23.0 */
 
-// (11:4) {#if row.model.contentHtml}
 function create_if_block$1(ctx) {
 	let html_tag;
 	let raw_value = /*row*/ ctx[0].model.contentHtml + "";
 
-	const block = {
-		c: function create() {
+	return {
+		c() {
 			html_tag = new HtmlTag(null);
 		},
-		m: function mount(target, anchor) {
+		m(target, anchor) {
 			html_tag.m(raw_value, target, anchor);
 		},
-		p: function update(ctx, dirty) {
+		p(ctx, dirty) {
 			if (dirty & /*row*/ 1 && raw_value !== (raw_value = /*row*/ ctx[0].model.contentHtml + "")) html_tag.p(raw_value);
 		},
-		d: function destroy(detaching) {
+		d(detaching) {
 			if (detaching) html_tag.d();
 		}
 	};
-
-	dispatch_dev("SvelteRegisterBlock", {
-		block,
-		id: create_if_block$1.name,
-		type: "if",
-		source: "(11:4) {#if row.model.contentHtml}",
-		ctx
-	});
-
-	return block;
 }
 
 function create_fragment$1(ctx) {
@@ -2086,26 +1702,22 @@ function create_fragment$1(ctx) {
 	let div_data_row_id_value;
 	let if_block = /*row*/ ctx[0].model.contentHtml && create_if_block$1(ctx);
 
-	const block = {
-		c: function create() {
+	return {
+		c() {
 			div = element("div");
 			if (if_block) if_block.c();
-			attr_dev(div, "class", div_class_value = "sg-row " + /*row*/ ctx[0].model.classes + " svelte-ejtbeo");
-			attr_dev(div, "data-row-id", div_data_row_id_value = /*row*/ ctx[0].model.id);
+			attr(div, "class", div_class_value = "sg-row " + /*row*/ ctx[0].model.classes + " svelte-7u5y5s");
+			attr(div, "data-row-id", div_data_row_id_value = /*row*/ ctx[0].model.id);
 			set_style(div, "height", /*$rowHeight*/ ctx[4] + "px");
 			toggle_class(div, "sg-hover", /*$hoveredRow*/ ctx[2] == /*row*/ ctx[0].model.id);
 			toggle_class(div, "sg-selected", /*$selectedRow*/ ctx[3] == /*row*/ ctx[0].model.id);
-			add_location(div, file$1, 9, 0, 221);
 		},
-		l: function claim(nodes) {
-			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
-		},
-		m: function mount(target, anchor) {
-			insert_dev(target, div, anchor);
+		m(target, anchor) {
+			insert(target, div, anchor);
 			if (if_block) if_block.m(div, null);
 			/*div_binding*/ ctx[8](div);
 		},
-		p: function update(ctx, [dirty]) {
+		p(ctx, [dirty]) {
 			if (/*row*/ ctx[0].model.contentHtml) {
 				if (if_block) {
 					if_block.p(ctx, dirty);
@@ -2119,12 +1731,12 @@ function create_fragment$1(ctx) {
 				if_block = null;
 			}
 
-			if (dirty & /*row*/ 1 && div_class_value !== (div_class_value = "sg-row " + /*row*/ ctx[0].model.classes + " svelte-ejtbeo")) {
-				attr_dev(div, "class", div_class_value);
+			if (dirty & /*row*/ 1 && div_class_value !== (div_class_value = "sg-row " + /*row*/ ctx[0].model.classes + " svelte-7u5y5s")) {
+				attr(div, "class", div_class_value);
 			}
 
 			if (dirty & /*row*/ 1 && div_data_row_id_value !== (div_data_row_id_value = /*row*/ ctx[0].model.id)) {
-				attr_dev(div, "data-row-id", div_data_row_id_value);
+				attr(div, "data-row-id", div_data_row_id_value);
 			}
 
 			if (dirty & /*$rowHeight*/ 16) {
@@ -2141,22 +1753,12 @@ function create_fragment$1(ctx) {
 		},
 		i: noop,
 		o: noop,
-		d: function destroy(detaching) {
-			if (detaching) detach_dev(div);
+		d(detaching) {
+			if (detaching) detach(div);
 			if (if_block) if_block.d();
 			/*div_binding*/ ctx[8](null);
 		}
 	};
-
-	dispatch_dev("SvelteRegisterBlock", {
-		block,
-		id: create_fragment$1.name,
-		type: "component",
-		source: "",
-		ctx
-	});
-
-	return block;
 }
 
 function instance$1($$self, $$props, $$invalidate) {
@@ -2166,21 +1768,10 @@ function instance$1($$self, $$props, $$invalidate) {
 	let { row } = $$props;
 	let rowElement;
 	const { rowHeight } = getContext("options");
-	validate_store(rowHeight, "rowHeight");
 	component_subscribe($$self, rowHeight, value => $$invalidate(4, $rowHeight = value));
 	const { hoveredRow, selectedRow } = getContext("gantt");
-	validate_store(hoveredRow, "hoveredRow");
 	component_subscribe($$self, hoveredRow, value => $$invalidate(2, $hoveredRow = value));
-	validate_store(selectedRow, "selectedRow");
 	component_subscribe($$self, selectedRow, value => $$invalidate(3, $selectedRow = value));
-	const writable_props = ["row"];
-
-	Object.keys($$props).forEach(key => {
-		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console.warn(`<Row> was created with unknown prop '${key}'`);
-	});
-
-	let { $$slots = {}, $$scope } = $$props;
-	validate_slots("Row", $$slots, []);
 
 	function div_binding($$value) {
 		binding_callbacks[$$value ? "unshift" : "push"](() => {
@@ -2191,27 +1782,6 @@ function instance$1($$self, $$props, $$invalidate) {
 	$$self.$set = $$props => {
 		if ("row" in $$props) $$invalidate(0, row = $$props.row);
 	};
-
-	$$self.$capture_state = () => ({
-		getContext,
-		row,
-		rowElement,
-		rowHeight,
-		hoveredRow,
-		selectedRow,
-		$hoveredRow,
-		$selectedRow,
-		$rowHeight
-	});
-
-	$$self.$inject_state = $$props => {
-		if ("row" in $$props) $$invalidate(0, row = $$props.row);
-		if ("rowElement" in $$props) $$invalidate(1, rowElement = $$props.rowElement);
-	};
-
-	if ($$props && "$$inject" in $$props) {
-		$$self.$inject_state($$props.$$inject);
-	}
 
 	return [
 		row,
@@ -2226,458 +1796,39 @@ function instance$1($$self, $$props, $$invalidate) {
 	];
 }
 
-class Row extends SvelteComponentDev {
+class Row extends SvelteComponent {
 	constructor(options) {
-		super(options);
+		super();
 		init(this, options, instance$1, create_fragment$1, safe_not_equal, { row: 0 });
-
-		dispatch_dev("SvelteRegisterComponent", {
-			component: this,
-			tagName: "Row",
-			options,
-			id: create_fragment$1.name
-		});
-
-		const { ctx } = this.$$;
-		const props = options.props || {};
-
-		if (/*row*/ ctx[0] === undefined && !("row" in props)) {
-			console.warn("<Row> was created without expected prop 'row'");
-		}
-	}
-
-	get row() {
-		throw new Error("<Row>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set row(value) {
-		throw new Error("<Row>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
 	}
 }
 
-/* src\entities\Milestone.svelte generated by Svelte v3.23.0 */
-
-const { Object: Object_1 } = globals;
-const file$2 = "src\\entities\\Milestone.svelte";
+/* src/entities/TimeRange.svelte generated by Svelte v3.23.0 */
 
 function create_fragment$2(ctx) {
-	let div1;
-	let div0;
-	let div1_class_value;
-	let mounted;
-	let dispose;
-
-	const block = {
-		c: function create() {
-			div1 = element("div");
-			div0 = element("div");
-			attr_dev(div0, "class", "inside svelte-fuyhwd");
-			add_location(div0, file$2, 122, 4, 3677);
-			attr_dev(div1, "class", div1_class_value = "sg-milestone " + /*model*/ ctx[0].classes + " svelte-fuyhwd");
-			set_style(div1, "transform", "translate(" + /*x*/ ctx[5] + "px, " + /*y*/ ctx[6] + "px)");
-			set_style(div1, "height", /*height*/ ctx[1] + "px");
-			set_style(div1, "width", /*height*/ ctx[1] + "px");
-			toggle_class(div1, "selected", /*selected*/ ctx[7]);
-			toggle_class(div1, "moving", /*dragging*/ ctx[4]);
-			add_location(div1, file$2, 115, 0, 3407);
-		},
-		l: function claim(nodes) {
-			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
-		},
-		m: function mount(target, anchor) {
-			insert_dev(target, div1, anchor);
-			append_dev(div1, div0);
-			/*div1_binding*/ ctx[23](div1);
-
-			if (!mounted) {
-				dispose = [
-					action_destroyer(ctx[10].call(null, div1)),
-					listen_dev(div1, "click", /*select*/ ctx[2], false, false, false)
-				];
-
-				mounted = true;
-			}
-		},
-		p: function update(ctx, [dirty]) {
-			if (dirty & /*model*/ 1 && div1_class_value !== (div1_class_value = "sg-milestone " + /*model*/ ctx[0].classes + " svelte-fuyhwd")) {
-				attr_dev(div1, "class", div1_class_value);
-			}
-
-			if (dirty & /*x, y*/ 96) {
-				set_style(div1, "transform", "translate(" + /*x*/ ctx[5] + "px, " + /*y*/ ctx[6] + "px)");
-			}
-
-			if (dirty & /*height*/ 2) {
-				set_style(div1, "height", /*height*/ ctx[1] + "px");
-			}
-
-			if (dirty & /*height*/ 2) {
-				set_style(div1, "width", /*height*/ ctx[1] + "px");
-			}
-
-			if (dirty & /*model, selected*/ 129) {
-				toggle_class(div1, "selected", /*selected*/ ctx[7]);
-			}
-
-			if (dirty & /*model, dragging*/ 17) {
-				toggle_class(div1, "moving", /*dragging*/ ctx[4]);
-			}
-		},
-		i: noop,
-		o: noop,
-		d: function destroy(detaching) {
-			if (detaching) detach_dev(div1);
-			/*div1_binding*/ ctx[23](null);
-			mounted = false;
-			run_all(dispose);
-		}
-	};
-
-	dispatch_dev("SvelteRegisterBlock", {
-		block,
-		id: create_fragment$2.name,
-		type: "component",
-		source: "",
-		ctx
-	});
-
-	return block;
-}
-
-function instance$2($$self, $$props, $$invalidate) {
-	let $rowStore;
-	let $taskStore;
-	let $rowPadding;
-	let $selection;
-	validate_store(rowStore, "rowStore");
-	component_subscribe($$self, rowStore, $$value => $$invalidate(14, $rowStore = $$value));
-	validate_store(taskStore, "taskStore");
-	component_subscribe($$self, taskStore, $$value => $$invalidate(15, $taskStore = $$value));
-	let milestoneElement;
-	const { rowPadding } = getContext("options");
-	validate_store(rowPadding, "rowPadding");
-	component_subscribe($$self, rowPadding, value => $$invalidate(16, $rowPadding = value));
-	const { selectionManager, api, rowContainer, dndManager, columnService } = getContext("services");
-	let { left } = $$props;
-	let { top } = $$props;
-	let { model } = $$props;
-	let { height = 20 } = $$props;
-	const selection = selectionManager.selection;
-	validate_store(selection, "selection");
-	component_subscribe($$self, selection, value => $$invalidate(17, $selection = value));
-	let dragging = false;
-	let x = null;
-	let y = null;
-
-	function drag(node) {
-		const ondrop = ({ x, y, currWidth, event, dragging }) => {
-			let rowChangeValid = true;
-
-			//row switching
-			if (dragging) {
-				const sourceRow = $rowStore.entities[model.resourceId];
-				const targetRow = dndManager.getTarget("row", event);
-
-				if (targetRow) {
-					$$invalidate(0, model.resourceId = targetRow.model.id, model);
-					api.tasks.raise.switchRow(this, targetRow, sourceRow);
-				} else {
-					rowChangeValid = false;
-				}
-			}
-
-			dragging = false;
-			const task = $taskStore.entities[model.id];
-
-			if (rowChangeValid) {
-				const newFrom = utils.roundTo(columnService.getDateByPosition(x));
-				const newLeft = columnService.getPositionByDate(newFrom);
-				Object.assign(model, { from: newFrom });
-
-				$taskStore.update({
-					...task,
-					left: newLeft,
-					top: rowPadding + $rowStore.entities[model.resourceId].y,
-					model
-				});
-			} else {
-				// reset position
-				$taskStore.update({ ...task });
-			}
-		};
-
-		const draggable = new Draggable(node,
-		{
-				onDown: ({ x, y }) => {
-					
-				}, //this.set({x, y});
-				onDrag: pos => {
-					($$invalidate(5, x = pos.x), $$invalidate(6, y = pos.y), $$invalidate(4, dragging = true));
-				},
-				dragAllowed: () => {
-					return row.model.enableDragging && model.enableDragging;
-				},
-				resizeAllowed: false,
-				onDrop: ondrop,
-				container: rowContainer,
-				getX: () => x,
-				getY: () => y
-			});
-
-		return {
-			destroy() {
-				draggable.destroy();
-			}
-		};
-	}
-
-	onMount(() => {
-		$$invalidate(5, x = $$invalidate(11, left = columnService.getPositionByDate(model.from)));
-		$$invalidate(6, y = $$invalidate(12, top = row.y + $rowPadding));
-		
-		$$invalidate(1, height = row.height - 2 * $rowPadding);
-	});
-
-	function select(event) {
-		if (event.ctrlKey) {
-			selectionManager.toggleSelection(model.id);
-		} else {
-			selectionManager.selectSingle(model.id);
-		}
-
-		if (selected) {
-			api.tasks.raise.select(model);
-		}
-	}
-
-	let selected = false;
-	let row;
-	const writable_props = ["left", "top", "model", "height"];
-
-	Object_1.keys($$props).forEach(key => {
-		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console.warn(`<Milestone> was created with unknown prop '${key}'`);
-	});
-
-	let { $$slots = {}, $$scope } = $$props;
-	validate_slots("Milestone", $$slots, []);
-
-	function div1_binding($$value) {
-		binding_callbacks[$$value ? "unshift" : "push"](() => {
-			$$invalidate(3, milestoneElement = $$value);
-		});
-	}
-
-	$$self.$set = $$props => {
-		if ("left" in $$props) $$invalidate(11, left = $$props.left);
-		if ("top" in $$props) $$invalidate(12, top = $$props.top);
-		if ("model" in $$props) $$invalidate(0, model = $$props.model);
-		if ("height" in $$props) $$invalidate(1, height = $$props.height);
-	};
-
-	$$self.$capture_state = () => ({
-		beforeUpdate,
-		onMount,
-		getContext,
-		milestoneElement,
-		Draggable,
-		rowStore,
-		taskStore,
-		rowPadding,
-		selectionManager,
-		api,
-		rowContainer,
-		dndManager,
-		columnService,
-		left,
-		top,
-		model,
-		height,
-		selection,
-		dragging,
-		x,
-		y,
-		drag,
-		select,
-		selected,
-		row,
-		$rowStore,
-		$taskStore,
-		$rowPadding,
-		$selection
-	});
-
-	$$self.$inject_state = $$props => {
-		if ("milestoneElement" in $$props) $$invalidate(3, milestoneElement = $$props.milestoneElement);
-		if ("left" in $$props) $$invalidate(11, left = $$props.left);
-		if ("top" in $$props) $$invalidate(12, top = $$props.top);
-		if ("model" in $$props) $$invalidate(0, model = $$props.model);
-		if ("height" in $$props) $$invalidate(1, height = $$props.height);
-		if ("dragging" in $$props) $$invalidate(4, dragging = $$props.dragging);
-		if ("x" in $$props) $$invalidate(5, x = $$props.x);
-		if ("y" in $$props) $$invalidate(6, y = $$props.y);
-		if ("selected" in $$props) $$invalidate(7, selected = $$props.selected);
-		if ("row" in $$props) row = $$props.row;
-	};
-
-	if ($$props && "$$inject" in $$props) {
-		$$self.$inject_state($$props.$$inject);
-	}
-
-	$$self.$$.update = () => {
-		if ($$self.$$.dirty & /*dragging, left, top*/ 6160) {
-			 {
-				if (!dragging) {
-					($$invalidate(5, x = left), $$invalidate(6, y = top));
-				}
-			}
-		}
-
-		if ($$self.$$.dirty & /*$selection, model*/ 131073) {
-			 $$invalidate(7, selected = $selection.indexOf(model.id) !== -1);
-		}
-
-		if ($$self.$$.dirty & /*$rowStore, model*/ 16385) {
-			 row = $rowStore.entities[model.resourceId];
-		}
-	};
-
-	return [
-		model,
-		height,
-		select,
-		milestoneElement,
-		dragging,
-		x,
-		y,
-		selected,
-		rowPadding,
-		selection,
-		drag,
-		left,
-		top,
-		row,
-		$rowStore,
-		$taskStore,
-		$rowPadding,
-		$selection,
-		selectionManager,
-		api,
-		rowContainer,
-		dndManager,
-		columnService,
-		div1_binding
-	];
-}
-
-class Milestone extends SvelteComponentDev {
-	constructor(options) {
-		super(options);
-
-		init(this, options, instance$2, create_fragment$2, safe_not_equal, {
-			left: 11,
-			top: 12,
-			model: 0,
-			height: 1,
-			select: 2
-		});
-
-		dispatch_dev("SvelteRegisterComponent", {
-			component: this,
-			tagName: "Milestone",
-			options,
-			id: create_fragment$2.name
-		});
-
-		const { ctx } = this.$$;
-		const props = options.props || {};
-
-		if (/*left*/ ctx[11] === undefined && !("left" in props)) {
-			console.warn("<Milestone> was created without expected prop 'left'");
-		}
-
-		if (/*top*/ ctx[12] === undefined && !("top" in props)) {
-			console.warn("<Milestone> was created without expected prop 'top'");
-		}
-
-		if (/*model*/ ctx[0] === undefined && !("model" in props)) {
-			console.warn("<Milestone> was created without expected prop 'model'");
-		}
-	}
-
-	get left() {
-		throw new Error("<Milestone>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set left(value) {
-		throw new Error("<Milestone>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get top() {
-		throw new Error("<Milestone>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set top(value) {
-		throw new Error("<Milestone>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get model() {
-		throw new Error("<Milestone>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set model(value) {
-		throw new Error("<Milestone>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get height() {
-		throw new Error("<Milestone>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set height(value) {
-		throw new Error("<Milestone>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get select() {
-		return this.$$.ctx[2];
-	}
-
-	set select(value) {
-		throw new Error("<Milestone>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-}
-
-/* src\entities\TimeRange.svelte generated by Svelte v3.23.0 */
-
-const file$3 = "src\\entities\\TimeRange.svelte";
-
-function create_fragment$3(ctx) {
 	let div1;
 	let div0;
 	let t_value = /*model*/ ctx[0].label + "";
 	let t;
 
-	const block = {
-		c: function create() {
+	return {
+		c() {
 			div1 = element("div");
 			div0 = element("div");
 			t = text(t_value);
-			attr_dev(div0, "class", "sg-time-range-label svelte-18yq9be");
-			add_location(div0, file$3, 16, 4, 378);
-			attr_dev(div1, "class", "sg-time-range svelte-18yq9be");
+			attr(div0, "class", "sg-time-range-label svelte-ezlpj0");
+			attr(div1, "class", "sg-time-range svelte-ezlpj0");
 			set_style(div1, "width", /*_position*/ ctx[2].width + "px");
 			set_style(div1, "left", /*_position*/ ctx[2].x + "px");
 			toggle_class(div1, "moving", /*resizing*/ ctx[1]);
-			add_location(div1, file$3, 15, 0, 264);
 		},
-		l: function claim(nodes) {
-			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
+		m(target, anchor) {
+			insert(target, div1, anchor);
+			append(div1, div0);
+			append(div0, t);
 		},
-		m: function mount(target, anchor) {
-			insert_dev(target, div1, anchor);
-			append_dev(div1, div0);
-			append_dev(div0, t);
-		},
-		p: function update(ctx, [dirty]) {
-			if (dirty & /*model*/ 1 && t_value !== (t_value = /*model*/ ctx[0].label + "")) set_data_dev(t, t_value);
+		p(ctx, [dirty]) {
+			if (dirty & /*model*/ 1 && t_value !== (t_value = /*model*/ ctx[0].label + "")) set_data(t, t_value);
 
 			if (dirty & /*_position*/ 4) {
 				set_style(div1, "width", /*_position*/ ctx[2].width + "px");
@@ -2693,37 +1844,19 @@ function create_fragment$3(ctx) {
 		},
 		i: noop,
 		o: noop,
-		d: function destroy(detaching) {
-			if (detaching) detach_dev(div1);
+		d(detaching) {
+			if (detaching) detach(div1);
 		}
 	};
-
-	dispatch_dev("SvelteRegisterBlock", {
-		block,
-		id: create_fragment$3.name,
-		type: "component",
-		source: "",
-		ctx
-	});
-
-	return block;
 }
 
-function instance$3($$self, $$props, $$invalidate) {
+function instance$2($$self, $$props, $$invalidate) {
 	let { model } = $$props;
 	let { left } = $$props;
 	let { width } = $$props;
 	let { resizing = false } = $$props;
 	const _position = { width, x: left };
 	
-	const writable_props = ["model", "left", "width", "resizing"];
-
-	Object.keys($$props).forEach(key => {
-		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console.warn(`<TimeRange> was created with unknown prop '${key}'`);
-	});
-
-	let { $$slots = {}, $$scope } = $$props;
-	validate_slots("TimeRange", $$slots, []);
 
 	$$self.$set = $$props => {
 		if ("model" in $$props) $$invalidate(0, model = $$props.model);
@@ -2731,19 +1864,6 @@ function instance$3($$self, $$props, $$invalidate) {
 		if ("width" in $$props) $$invalidate(4, width = $$props.width);
 		if ("resizing" in $$props) $$invalidate(1, resizing = $$props.resizing);
 	};
-
-	$$self.$capture_state = () => ({ model, left, width, resizing, _position });
-
-	$$self.$inject_state = $$props => {
-		if ("model" in $$props) $$invalidate(0, model = $$props.model);
-		if ("left" in $$props) $$invalidate(3, left = $$props.left);
-		if ("width" in $$props) $$invalidate(4, width = $$props.width);
-		if ("resizing" in $$props) $$invalidate(1, resizing = $$props.resizing);
-	};
-
-	if ($$props && "$$inject" in $$props) {
-		$$self.$inject_state($$props.$$inject);
-	}
 
 	$$self.$$.update = () => {
 		if ($$self.$$.dirty & /*left, width*/ 24) {
@@ -2756,73 +1876,16 @@ function instance$3($$self, $$props, $$invalidate) {
 	return [model, resizing, _position, left, width];
 }
 
-class TimeRange extends SvelteComponentDev {
+class TimeRange extends SvelteComponent {
 	constructor(options) {
-		super(options);
-		init(this, options, instance$3, create_fragment$3, safe_not_equal, { model: 0, left: 3, width: 4, resizing: 1 });
-
-		dispatch_dev("SvelteRegisterComponent", {
-			component: this,
-			tagName: "TimeRange",
-			options,
-			id: create_fragment$3.name
-		});
-
-		const { ctx } = this.$$;
-		const props = options.props || {};
-
-		if (/*model*/ ctx[0] === undefined && !("model" in props)) {
-			console.warn("<TimeRange> was created without expected prop 'model'");
-		}
-
-		if (/*left*/ ctx[3] === undefined && !("left" in props)) {
-			console.warn("<TimeRange> was created without expected prop 'left'");
-		}
-
-		if (/*width*/ ctx[4] === undefined && !("width" in props)) {
-			console.warn("<TimeRange> was created without expected prop 'width'");
-		}
-	}
-
-	get model() {
-		throw new Error("<TimeRange>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set model(value) {
-		throw new Error("<TimeRange>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get left() {
-		throw new Error("<TimeRange>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set left(value) {
-		throw new Error("<TimeRange>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get width() {
-		throw new Error("<TimeRange>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set width(value) {
-		throw new Error("<TimeRange>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get resizing() {
-		throw new Error("<TimeRange>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set resizing(value) {
-		throw new Error("<TimeRange>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+		super();
+		init(this, options, instance$2, create_fragment$2, safe_not_equal, { model: 0, left: 3, width: 4, resizing: 1 });
 	}
 }
 
-/* src\entities\TimeRangeHeader.svelte generated by Svelte v3.23.0 */
+/* src/entities/TimeRangeHeader.svelte generated by Svelte v3.23.0 */
 
-const { Object: Object_1$1 } = globals;
-const file$4 = "src\\entities\\TimeRangeHeader.svelte";
-
-function create_fragment$4(ctx) {
+function create_fragment$3(ctx) {
 	let div2;
 	let div0;
 	let t;
@@ -2830,29 +1893,23 @@ function create_fragment$4(ctx) {
 	let mounted;
 	let dispose;
 
-	const block = {
-		c: function create() {
+	return {
+		c() {
 			div2 = element("div");
 			div0 = element("div");
 			t = space();
 			div1 = element("div");
-			attr_dev(div0, "class", "sg-time-range-handle-left svelte-16dwney");
-			add_location(div0, file$4, 86, 4, 2560);
-			attr_dev(div1, "class", "sg-time-range-handle-right svelte-16dwney");
-			add_location(div1, file$4, 87, 4, 2620);
-			attr_dev(div2, "class", "sg-time-range-control svelte-16dwney");
+			attr(div0, "class", "sg-time-range-handle-left svelte-1hnnt3v");
+			attr(div1, "class", "sg-time-range-handle-right svelte-1hnnt3v");
+			attr(div2, "class", "sg-time-range-control svelte-1hnnt3v");
 			set_style(div2, "width", /*_position*/ ctx[0].width + "px");
 			set_style(div2, "left", /*_position*/ ctx[0].x + "px");
-			add_location(div2, file$4, 85, 0, 2464);
 		},
-		l: function claim(nodes) {
-			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
-		},
-		m: function mount(target, anchor) {
-			insert_dev(target, div2, anchor);
-			append_dev(div2, div0);
-			append_dev(div2, t);
-			append_dev(div2, div1);
+		m(target, anchor) {
+			insert(target, div2, anchor);
+			append(div2, div0);
+			append(div2, t);
+			append(div2, div1);
 
 			if (!mounted) {
 				dispose = [
@@ -2863,7 +1920,7 @@ function create_fragment$4(ctx) {
 				mounted = true;
 			}
 		},
-		p: function update(ctx, [dirty]) {
+		p(ctx, [dirty]) {
 			if (dirty & /*_position*/ 1) {
 				set_style(div2, "width", /*_position*/ ctx[0].width + "px");
 			}
@@ -2874,25 +1931,15 @@ function create_fragment$4(ctx) {
 		},
 		i: noop,
 		o: noop,
-		d: function destroy(detaching) {
-			if (detaching) detach_dev(div2);
+		d(detaching) {
+			if (detaching) detach(div2);
 			mounted = false;
 			run_all(dispose);
 		}
 	};
-
-	dispatch_dev("SvelteRegisterBlock", {
-		block,
-		id: create_fragment$4.name,
-		type: "component",
-		source: "",
-		ctx
-	});
-
-	return block;
 }
 
-function instance$4($$self, $$props, $$invalidate) {
+function instance$3($$self, $$props, $$invalidate) {
 	const { rowContainer } = getContext("gantt");
 	const { utils, columnService } = getContext("services");
 	const { resizeHandleWidth } = getContext("options");
@@ -2956,50 +2003,11 @@ function instance$4($$self, $$props, $$invalidate) {
 			});
 	}
 
-	const writable_props = ["model", "width", "left"];
-
-	Object_1$1.keys($$props).forEach(key => {
-		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console.warn(`<TimeRangeHeader> was created with unknown prop '${key}'`);
-	});
-
-	let { $$slots = {}, $$scope } = $$props;
-	validate_slots("TimeRangeHeader", $$slots, []);
-
 	$$self.$set = $$props => {
 		if ("model" in $$props) $$invalidate(2, model = $$props.model);
 		if ("width" in $$props) $$invalidate(3, width = $$props.width);
 		if ("left" in $$props) $$invalidate(4, left = $$props.left);
 	};
-
-	$$self.$capture_state = () => ({
-		beforeUpdate,
-		getContext,
-		Draggable,
-		timeRangeStore,
-		rowContainer,
-		utils,
-		columnService,
-		resizeHandleWidth,
-		from,
-		to,
-		ganttWidth,
-		visibleWidth,
-		model,
-		width,
-		left,
-		_position,
-		drag
-	});
-
-	$$self.$inject_state = $$props => {
-		if ("model" in $$props) $$invalidate(2, model = $$props.model);
-		if ("width" in $$props) $$invalidate(3, width = $$props.width);
-		if ("left" in $$props) $$invalidate(4, left = $$props.left);
-	};
-
-	if ($$props && "$$inject" in $$props) {
-		$$self.$inject_state($$props.$$inject);
-	}
 
 	$$self.$$.update = () => {
 		if ($$self.$$.dirty & /*left, width*/ 24) {
@@ -3012,183 +2020,14 @@ function instance$4($$self, $$props, $$invalidate) {
 	return [_position, drag, model, width, left];
 }
 
-class TimeRangeHeader extends SvelteComponentDev {
+class TimeRangeHeader extends SvelteComponent {
 	constructor(options) {
-		super(options);
-		init(this, options, instance$4, create_fragment$4, safe_not_equal, { model: 2, width: 3, left: 4 });
-
-		dispatch_dev("SvelteRegisterComponent", {
-			component: this,
-			tagName: "TimeRangeHeader",
-			options,
-			id: create_fragment$4.name
-		});
-
-		const { ctx } = this.$$;
-		const props = options.props || {};
-
-		if (/*model*/ ctx[2] === undefined && !("model" in props)) {
-			console.warn("<TimeRangeHeader> was created without expected prop 'model'");
-		}
-
-		if (/*width*/ ctx[3] === undefined && !("width" in props)) {
-			console.warn("<TimeRangeHeader> was created without expected prop 'width'");
-		}
-
-		if (/*left*/ ctx[4] === undefined && !("left" in props)) {
-			console.warn("<TimeRangeHeader> was created without expected prop 'left'");
-		}
-	}
-
-	get model() {
-		throw new Error("<TimeRangeHeader>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set model(value) {
-		throw new Error("<TimeRangeHeader>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get width() {
-		throw new Error("<TimeRangeHeader>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set width(value) {
-		throw new Error("<TimeRangeHeader>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get left() {
-		throw new Error("<TimeRangeHeader>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set left(value) {
-		throw new Error("<TimeRangeHeader>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+		super();
+		init(this, options, instance$3, create_fragment$3, safe_not_equal, { model: 2, width: 3, left: 4 });
 	}
 }
 
-/* src\column\Column.svelte generated by Svelte v3.23.0 */
-
-const file$5 = "src\\column\\Column.svelte";
-
-function create_fragment$5(ctx) {
-	let div;
-
-	const block = {
-		c: function create() {
-			div = element("div");
-			attr_dev(div, "class", "column svelte-17q2a4x");
-			set_style(div, "left", /*left*/ ctx[0] + "px");
-			set_style(div, "width", /*width*/ ctx[1] + "px");
-			add_location(div, file$5, 5, 0, 68);
-		},
-		l: function claim(nodes) {
-			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
-		},
-		m: function mount(target, anchor) {
-			insert_dev(target, div, anchor);
-		},
-		p: function update(ctx, [dirty]) {
-			if (dirty & /*left*/ 1) {
-				set_style(div, "left", /*left*/ ctx[0] + "px");
-			}
-
-			if (dirty & /*width*/ 2) {
-				set_style(div, "width", /*width*/ ctx[1] + "px");
-			}
-		},
-		i: noop,
-		o: noop,
-		d: function destroy(detaching) {
-			if (detaching) detach_dev(div);
-		}
-	};
-
-	dispatch_dev("SvelteRegisterBlock", {
-		block,
-		id: create_fragment$5.name,
-		type: "component",
-		source: "",
-		ctx
-	});
-
-	return block;
-}
-
-function instance$5($$self, $$props, $$invalidate) {
-	let { left } = $$props;
-	let { width } = $$props;
-	const writable_props = ["left", "width"];
-
-	Object.keys($$props).forEach(key => {
-		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console.warn(`<Column> was created with unknown prop '${key}'`);
-	});
-
-	let { $$slots = {}, $$scope } = $$props;
-	validate_slots("Column", $$slots, []);
-
-	$$self.$set = $$props => {
-		if ("left" in $$props) $$invalidate(0, left = $$props.left);
-		if ("width" in $$props) $$invalidate(1, width = $$props.width);
-	};
-
-	$$self.$capture_state = () => ({ left, width });
-
-	$$self.$inject_state = $$props => {
-		if ("left" in $$props) $$invalidate(0, left = $$props.left);
-		if ("width" in $$props) $$invalidate(1, width = $$props.width);
-	};
-
-	if ($$props && "$$inject" in $$props) {
-		$$self.$inject_state($$props.$$inject);
-	}
-
-	return [left, width];
-}
-
-class Column extends SvelteComponentDev {
-	constructor(options) {
-		super(options);
-		init(this, options, instance$5, create_fragment$5, safe_not_equal, { left: 0, width: 1 });
-
-		dispatch_dev("SvelteRegisterComponent", {
-			component: this,
-			tagName: "Column",
-			options,
-			id: create_fragment$5.name
-		});
-
-		const { ctx } = this.$$;
-		const props = options.props || {};
-
-		if (/*left*/ ctx[0] === undefined && !("left" in props)) {
-			console.warn("<Column> was created without expected prop 'left'");
-		}
-
-		if (/*width*/ ctx[1] === undefined && !("width" in props)) {
-			console.warn("<Column> was created without expected prop 'width'");
-		}
-	}
-
-	get left() {
-		throw new Error("<Column>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set left(value) {
-		throw new Error("<Column>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get width() {
-		throw new Error("<Column>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set width(value) {
-		throw new Error("<Column>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-}
-
-/* src\column\ColumnHeaderRow.svelte generated by Svelte v3.23.0 */
-
-const { console: console_1 } = globals;
-const file$6 = "src\\column\\ColumnHeaderRow.svelte";
+/* src/column/ColumnHeaderRow.svelte generated by Svelte v3.23.0 */
 
 function get_each_context(ctx, list, i) {
 	const child_ctx = ctx.slice();
@@ -3196,7 +2035,7 @@ function get_each_context(ctx, list, i) {
 	return child_ctx;
 }
 
-// (52:4) {#each _headers as _header}
+// (93:2) {#each _headers as _header}
 function create_each_block(ctx) {
 	let div1;
 	let div0;
@@ -3210,33 +2049,31 @@ function create_each_block(ctx) {
 		return /*click_handler*/ ctx[12](/*_header*/ ctx[13], ...args);
 	}
 
-	const block = {
-		c: function create() {
+	return {
+		c() {
 			div1 = element("div");
 			div0 = element("div");
 			t0 = text(t0_value);
 			t1 = space();
-			attr_dev(div0, "class", "column-header-cell-label svelte-1sbstdn");
-			add_location(div0, file$6, 53, 12, 1751);
-			attr_dev(div1, "class", "column-header-cell svelte-1sbstdn");
+			attr(div0, "class", "column-header-cell-label svelte-di0tt7");
+			attr(div1, "class", "column-header-cell svelte-di0tt7");
 			set_style(div1, "width", /*_header*/ ctx[13].width + "px");
 			toggle_class(div1, "sticky", /*header*/ ctx[0].sticky);
-			add_location(div1, file$6, 52, 8, 1540);
 		},
-		m: function mount(target, anchor) {
-			insert_dev(target, div1, anchor);
-			append_dev(div1, div0);
-			append_dev(div0, t0);
-			append_dev(div1, t1);
+		m(target, anchor) {
+			insert(target, div1, anchor);
+			append(div1, div0);
+			append(div0, t0);
+			append(div1, t1);
 
 			if (!mounted) {
-				dispose = listen_dev(div1, "click", click_handler, false, false, false);
+				dispose = listen(div1, "click", click_handler);
 				mounted = true;
 			}
 		},
-		p: function update(new_ctx, dirty) {
+		p(new_ctx, dirty) {
 			ctx = new_ctx;
-			if (dirty & /*_headers*/ 2 && t0_value !== (t0_value = (/*_header*/ ctx[13].label || "N/A") + "")) set_data_dev(t0, t0_value);
+			if (dirty & /*_headers*/ 2 && t0_value !== (t0_value = (/*_header*/ ctx[13].label || "N/A") + "")) set_data(t0, t0_value);
 
 			if (dirty & /*_headers*/ 2) {
 				set_style(div1, "width", /*_header*/ ctx[13].width + "px");
@@ -3246,59 +2083,43 @@ function create_each_block(ctx) {
 				toggle_class(div1, "sticky", /*header*/ ctx[0].sticky);
 			}
 		},
-		d: function destroy(detaching) {
-			if (detaching) detach_dev(div1);
+		d(detaching) {
+			if (detaching) detach(div1);
 			mounted = false;
 			dispose();
 		}
 	};
-
-	dispatch_dev("SvelteRegisterBlock", {
-		block,
-		id: create_each_block.name,
-		type: "each",
-		source: "(52:4) {#each _headers as _header}",
-		ctx
-	});
-
-	return block;
 }
 
-function create_fragment$6(ctx) {
+function create_fragment$4(ctx) {
 	let div;
 	let each_value = /*_headers*/ ctx[1];
-	validate_each_argument(each_value);
 	let each_blocks = [];
 
 	for (let i = 0; i < each_value.length; i += 1) {
 		each_blocks[i] = create_each_block(get_each_context(ctx, each_value, i));
 	}
 
-	const block = {
-		c: function create() {
+	return {
+		c() {
 			div = element("div");
 
 			for (let i = 0; i < each_blocks.length; i += 1) {
 				each_blocks[i].c();
 			}
 
-			attr_dev(div, "class", "column-header-row svelte-1sbstdn");
-			add_location(div, file$6, 50, 0, 1466);
+			attr(div, "class", "column-header-row svelte-di0tt7");
 		},
-		l: function claim(nodes) {
-			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
-		},
-		m: function mount(target, anchor) {
-			insert_dev(target, div, anchor);
+		m(target, anchor) {
+			insert(target, div, anchor);
 
 			for (let i = 0; i < each_blocks.length; i += 1) {
 				each_blocks[i].m(div, null);
 			}
 		},
-		p: function update(ctx, [dirty]) {
+		p(ctx, [dirty]) {
 			if (dirty & /*_headers, header, dispatch*/ 7) {
 				each_value = /*_headers*/ ctx[1];
-				validate_each_argument(each_value);
 				let i;
 
 				for (i = 0; i < each_value.length; i += 1) {
@@ -3322,31 +2143,19 @@ function create_fragment$6(ctx) {
 		},
 		i: noop,
 		o: noop,
-		d: function destroy(detaching) {
-			if (detaching) detach_dev(div);
+		d(detaching) {
+			if (detaching) detach(div);
 			destroy_each(each_blocks, detaching);
 		}
 	};
-
-	dispatch_dev("SvelteRegisterBlock", {
-		block,
-		id: create_fragment$6.name,
-		type: "component",
-		source: "",
-		ctx
-	});
-
-	return block;
 }
 
-function instance$6($$self, $$props, $$invalidate) {
+function instance$4($$self, $$props, $$invalidate) {
 	let $width;
 	let $from;
 	const dispatch = createEventDispatcher();
 	const { from, to, width } = getContext("dimensions");
-	validate_store(from, "from");
 	component_subscribe($$self, from, value => $$invalidate(10, $from = value));
-	validate_store(width, "width");
 	component_subscribe($$self, width, value => $$invalidate(9, $width = value));
 	let { header } = $$props;
 	let { baseWidth } = $$props;
@@ -3354,14 +2163,6 @@ function instance$6($$self, $$props, $$invalidate) {
 	let { columnWidth } = $$props;
 	let { columnCount } = $$props;
 	let _headers = [];
-	const writable_props = ["header", "baseWidth", "baseDuration", "columnWidth", "columnCount"];
-
-	Object.keys($$props).forEach(key => {
-		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console_1.warn(`<ColumnHeaderRow> was created with unknown prop '${key}'`);
-	});
-
-	let { $$slots = {}, $$scope } = $$props;
-	validate_slots("ColumnHeaderRow", $$slots, []);
 
 	const click_handler = _header => dispatch("dateSelected", {
 		from: _header.from,
@@ -3377,40 +2178,10 @@ function instance$6($$self, $$props, $$invalidate) {
 		if ("columnCount" in $$props) $$invalidate(6, columnCount = $$props.columnCount);
 	};
 
-	$$self.$capture_state = () => ({
-		createEventDispatcher,
-		getContext,
-		dispatch,
-		momentDuration: duration,
-		from,
-		to,
-		width,
-		header,
-		baseWidth,
-		baseDuration,
-		columnWidth,
-		columnCount,
-		_headers,
-		$width,
-		$from
-	});
-
-	$$self.$inject_state = $$props => {
-		if ("header" in $$props) $$invalidate(0, header = $$props.header);
-		if ("baseWidth" in $$props) $$invalidate(7, baseWidth = $$props.baseWidth);
-		if ("baseDuration" in $$props) $$invalidate(8, baseDuration = $$props.baseDuration);
-		if ("columnWidth" in $$props) $$invalidate(5, columnWidth = $$props.columnWidth);
-		if ("columnCount" in $$props) $$invalidate(6, columnCount = $$props.columnCount);
-		if ("_headers" in $$props) $$invalidate(1, _headers = $$props._headers);
-	};
-
-	if ($$props && "$$inject" in $$props) {
-		$$self.$inject_state($$props.$$inject);
-	}
-
 	$$self.$$.update = () => {
 		if ($$self.$$.dirty & /*header, baseDuration, baseWidth*/ 385) {
 			 {
+				debugger;
 				const offset = header.offset || 1;
 				const duration$1 = duration(offset, header.unit).asMilliseconds();
 				const ratio = duration$1 / baseDuration;
@@ -3469,87 +2240,17 @@ function instance$6($$self, $$props, $$invalidate) {
 	];
 }
 
-class ColumnHeaderRow extends SvelteComponentDev {
+class ColumnHeaderRow extends SvelteComponent {
 	constructor(options) {
-		super(options);
+		super();
 
-		init(this, options, instance$6, create_fragment$6, safe_not_equal, {
+		init(this, options, instance$4, create_fragment$4, safe_not_equal, {
 			header: 0,
 			baseWidth: 7,
 			baseDuration: 8,
 			columnWidth: 5,
 			columnCount: 6
 		});
-
-		dispatch_dev("SvelteRegisterComponent", {
-			component: this,
-			tagName: "ColumnHeaderRow",
-			options,
-			id: create_fragment$6.name
-		});
-
-		const { ctx } = this.$$;
-		const props = options.props || {};
-
-		if (/*header*/ ctx[0] === undefined && !("header" in props)) {
-			console_1.warn("<ColumnHeaderRow> was created without expected prop 'header'");
-		}
-
-		if (/*baseWidth*/ ctx[7] === undefined && !("baseWidth" in props)) {
-			console_1.warn("<ColumnHeaderRow> was created without expected prop 'baseWidth'");
-		}
-
-		if (/*baseDuration*/ ctx[8] === undefined && !("baseDuration" in props)) {
-			console_1.warn("<ColumnHeaderRow> was created without expected prop 'baseDuration'");
-		}
-
-		if (/*columnWidth*/ ctx[5] === undefined && !("columnWidth" in props)) {
-			console_1.warn("<ColumnHeaderRow> was created without expected prop 'columnWidth'");
-		}
-
-		if (/*columnCount*/ ctx[6] === undefined && !("columnCount" in props)) {
-			console_1.warn("<ColumnHeaderRow> was created without expected prop 'columnCount'");
-		}
-	}
-
-	get header() {
-		throw new Error("<ColumnHeaderRow>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set header(value) {
-		throw new Error("<ColumnHeaderRow>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get baseWidth() {
-		throw new Error("<ColumnHeaderRow>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set baseWidth(value) {
-		throw new Error("<ColumnHeaderRow>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get baseDuration() {
-		throw new Error("<ColumnHeaderRow>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set baseDuration(value) {
-		throw new Error("<ColumnHeaderRow>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get columnWidth() {
-		throw new Error("<ColumnHeaderRow>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set columnWidth(value) {
-		throw new Error("<ColumnHeaderRow>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get columnCount() {
-		throw new Error("<ColumnHeaderRow>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set columnCount(value) {
-		throw new Error("<ColumnHeaderRow>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
 	}
 }
 
@@ -3621,9 +2322,7 @@ function get(input, value, comparer, strict) {
     return [input[res[0]], input[res[1]]];
 }
 
-/* src\column\ColumnHeader.svelte generated by Svelte v3.23.0 */
-
-const { console: console_1$1 } = globals;
+/* src/column/ColumnHeader.svelte generated by Svelte v3.23.0 */
 
 function get_each_context$1(ctx, list, i) {
 	const child_ctx = ctx.slice();
@@ -3640,57 +2339,45 @@ function create_each_block$1(ctx) {
 				header: /*header*/ ctx[13],
 				baseWidth: /*baseHeaderWidth*/ ctx[1],
 				baseDuration: /*baseHeaderDuration*/ ctx[2]
-			},
-			$$inline: true
+			}
 		});
 
 	columnheaderrow.$on("dateSelected", /*dateSelected_handler*/ ctx[12]);
 
-	const block = {
-		c: function create() {
+	return {
+		c() {
 			create_component(columnheaderrow.$$.fragment);
 		},
-		m: function mount(target, anchor) {
+		m(target, anchor) {
 			mount_component(columnheaderrow, target, anchor);
 			current = true;
 		},
-		p: function update(ctx, dirty) {
+		p(ctx, dirty) {
 			const columnheaderrow_changes = {};
 			if (dirty & /*headers*/ 1) columnheaderrow_changes.header = /*header*/ ctx[13];
 			if (dirty & /*baseHeaderWidth*/ 2) columnheaderrow_changes.baseWidth = /*baseHeaderWidth*/ ctx[1];
 			if (dirty & /*baseHeaderDuration*/ 4) columnheaderrow_changes.baseDuration = /*baseHeaderDuration*/ ctx[2];
 			columnheaderrow.$set(columnheaderrow_changes);
 		},
-		i: function intro(local) {
+		i(local) {
 			if (current) return;
 			transition_in(columnheaderrow.$$.fragment, local);
 			current = true;
 		},
-		o: function outro(local) {
+		o(local) {
 			transition_out(columnheaderrow.$$.fragment, local);
 			current = false;
 		},
-		d: function destroy(detaching) {
+		d(detaching) {
 			destroy_component(columnheaderrow, detaching);
 		}
 	};
-
-	dispatch_dev("SvelteRegisterBlock", {
-		block,
-		id: create_each_block$1.name,
-		type: "each",
-		source: "(48:0) {#each headers as header}",
-		ctx
-	});
-
-	return block;
 }
 
-function create_fragment$7(ctx) {
+function create_fragment$5(ctx) {
 	let each_1_anchor;
 	let current;
 	let each_value = /*headers*/ ctx[0];
-	validate_each_argument(each_value);
 	let each_blocks = [];
 
 	for (let i = 0; i < each_value.length; i += 1) {
@@ -3701,29 +2388,25 @@ function create_fragment$7(ctx) {
 		each_blocks[i] = null;
 	});
 
-	const block = {
-		c: function create() {
+	return {
+		c() {
 			for (let i = 0; i < each_blocks.length; i += 1) {
 				each_blocks[i].c();
 			}
 
 			each_1_anchor = empty();
 		},
-		l: function claim(nodes) {
-			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
-		},
-		m: function mount(target, anchor) {
+		m(target, anchor) {
 			for (let i = 0; i < each_blocks.length; i += 1) {
 				each_blocks[i].m(target, anchor);
 			}
 
-			insert_dev(target, each_1_anchor, anchor);
+			insert(target, each_1_anchor, anchor);
 			current = true;
 		},
-		p: function update(ctx, [dirty]) {
+		p(ctx, [dirty]) {
 			if (dirty & /*headers, baseHeaderWidth, baseHeaderDuration*/ 7) {
 				each_value = /*headers*/ ctx[0];
-				validate_each_argument(each_value);
 				let i;
 
 				for (i = 0; i < each_value.length; i += 1) {
@@ -3749,7 +2432,7 @@ function create_fragment$7(ctx) {
 				check_outros();
 			}
 		},
-		i: function intro(local) {
+		i(local) {
 			if (current) return;
 
 			for (let i = 0; i < each_value.length; i += 1) {
@@ -3758,7 +2441,7 @@ function create_fragment$7(ctx) {
 
 			current = true;
 		},
-		o: function outro(local) {
+		o(local) {
 			each_blocks = each_blocks.filter(Boolean);
 
 			for (let i = 0; i < each_blocks.length; i += 1) {
@@ -3767,24 +2450,14 @@ function create_fragment$7(ctx) {
 
 			current = false;
 		},
-		d: function destroy(detaching) {
+		d(detaching) {
 			destroy_each(each_blocks, detaching);
-			if (detaching) detach_dev(each_1_anchor);
+			if (detaching) detach(each_1_anchor);
 		}
 	};
-
-	dispatch_dev("SvelteRegisterBlock", {
-		block,
-		id: create_fragment$7.name,
-		type: "component",
-		source: "",
-		ctx
-	});
-
-	return block;
 }
 
-function instance$7($$self, $$props, $$invalidate) {
+function instance$5($$self, $$props, $$invalidate) {
 	let $from;
 	let $to;
 	let $width;
@@ -3792,23 +2465,12 @@ function instance$7($$self, $$props, $$invalidate) {
 	let { columnUnit } = $$props;
 	let { columnOffset } = $$props;
 	const { from, to, width } = getContext("dimensions");
-	validate_store(from, "from");
 	component_subscribe($$self, from, value => $$invalidate(9, $from = value));
-	validate_store(to, "to");
 	component_subscribe($$self, to, value => $$invalidate(10, $to = value));
-	validate_store(width, "width");
 	component_subscribe($$self, width, value => $$invalidate(11, $width = value));
 	let minHeader;
 	let baseHeaderWidth;
 	let baseHeaderDuration;
-	const writable_props = ["headers", "columnUnit", "columnOffset"];
-
-	Object.keys($$props).forEach(key => {
-		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console_1$1.warn(`<ColumnHeader> was created with unknown prop '${key}'`);
-	});
-
-	let { $$slots = {}, $$scope } = $$props;
-	validate_slots("ColumnHeader", $$slots, []);
 
 	function dateSelected_handler(event) {
 		bubble($$self, event);
@@ -3819,38 +2481,6 @@ function instance$7($$self, $$props, $$invalidate) {
 		if ("columnUnit" in $$props) $$invalidate(6, columnUnit = $$props.columnUnit);
 		if ("columnOffset" in $$props) $$invalidate(7, columnOffset = $$props.columnOffset);
 	};
-
-	$$self.$capture_state = () => ({
-		getContext,
-		momentDuration: duration,
-		getPositionByDate,
-		ColumnHeaderRow,
-		headers,
-		columnUnit,
-		columnOffset,
-		from,
-		to,
-		width,
-		minHeader,
-		baseHeaderWidth,
-		baseHeaderDuration,
-		$from,
-		$to,
-		$width
-	});
-
-	$$self.$inject_state = $$props => {
-		if ("headers" in $$props) $$invalidate(0, headers = $$props.headers);
-		if ("columnUnit" in $$props) $$invalidate(6, columnUnit = $$props.columnUnit);
-		if ("columnOffset" in $$props) $$invalidate(7, columnOffset = $$props.columnOffset);
-		if ("minHeader" in $$props) $$invalidate(8, minHeader = $$props.minHeader);
-		if ("baseHeaderWidth" in $$props) $$invalidate(1, baseHeaderWidth = $$props.baseHeaderWidth);
-		if ("baseHeaderDuration" in $$props) $$invalidate(2, baseHeaderDuration = $$props.baseHeaderDuration);
-	};
-
-	if ($$props && "$$inject" in $$props) {
-		$$self.$inject_state($$props.$$inject);
-	}
 
 	$$self.$$.update = () => {
 		if ($$self.$$.dirty & /*headers, columnUnit, columnOffset*/ 193) {
@@ -3903,104 +2533,43 @@ function instance$7($$self, $$props, $$invalidate) {
 	];
 }
 
-class ColumnHeader extends SvelteComponentDev {
+class ColumnHeader extends SvelteComponent {
 	constructor(options) {
-		super(options);
+		super();
 
-		init(this, options, instance$7, create_fragment$7, safe_not_equal, {
+		init(this, options, instance$5, create_fragment$5, safe_not_equal, {
 			headers: 0,
 			columnUnit: 6,
 			columnOffset: 7
 		});
-
-		dispatch_dev("SvelteRegisterComponent", {
-			component: this,
-			tagName: "ColumnHeader",
-			options,
-			id: create_fragment$7.name
-		});
-
-		const { ctx } = this.$$;
-		const props = options.props || {};
-
-		if (/*headers*/ ctx[0] === undefined && !("headers" in props)) {
-			console_1$1.warn("<ColumnHeader> was created without expected prop 'headers'");
-		}
-
-		if (/*columnUnit*/ ctx[6] === undefined && !("columnUnit" in props)) {
-			console_1$1.warn("<ColumnHeader> was created without expected prop 'columnUnit'");
-		}
-
-		if (/*columnOffset*/ ctx[7] === undefined && !("columnOffset" in props)) {
-			console_1$1.warn("<ColumnHeader> was created without expected prop 'columnOffset'");
-		}
-	}
-
-	get headers() {
-		throw new Error("<ColumnHeader>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set headers(value) {
-		throw new Error("<ColumnHeader>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get columnUnit() {
-		throw new Error("<ColumnHeader>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set columnUnit(value) {
-		throw new Error("<ColumnHeader>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get columnOffset() {
-		throw new Error("<ColumnHeader>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set columnOffset(value) {
-		throw new Error("<ColumnHeader>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
 	}
 }
 
-/* src\column\Columns.svelte generated by Svelte v3.23.0 */
-const file$7 = "src\\column\\Columns.svelte";
+/* src/column/Columns.svelte generated by Svelte v3.23.0 */
 
-function create_fragment$8(ctx) {
+function create_fragment$6(ctx) {
 	let div;
 
-	const block = {
-		c: function create() {
+	return {
+		c() {
 			div = element("div");
-			attr_dev(div, "class", "sg-columns svelte-1clwlpk");
+			attr(div, "class", "sg-columns svelte-19kvsxe");
 			set_style(div, "background-image", /*backgroundImage*/ ctx[0]);
-			add_location(div, file$7, 48, 0, 1317);
 		},
-		l: function claim(nodes) {
-			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
+		m(target, anchor) {
+			insert(target, div, anchor);
 		},
-		m: function mount(target, anchor) {
-			insert_dev(target, div, anchor);
-		},
-		p: function update(ctx, [dirty]) {
+		p(ctx, [dirty]) {
 			if (dirty & /*backgroundImage*/ 1) {
 				set_style(div, "background-image", /*backgroundImage*/ ctx[0]);
 			}
 		},
 		i: noop,
 		o: noop,
-		d: function destroy(detaching) {
-			if (detaching) detach_dev(div);
+		d(detaching) {
+			if (detaching) detach(div);
 		}
 	};
-
-	dispatch_dev("SvelteRegisterBlock", {
-		block,
-		id: create_fragment$8.name,
-		type: "component",
-		source: "",
-		ctx
-	});
-
-	return block;
 }
 
 function lineAt(ctx, x) {
@@ -4010,7 +2579,7 @@ function lineAt(ctx, x) {
 	ctx.stroke();
 }
 
-function instance$8($$self, $$props, $$invalidate) {
+function instance$6($$self, $$props, $$invalidate) {
 	let { columns = [] } = $$props;
 	let { columnStrokeWidth = 1 } = $$props;
 	let { columnStrokeColor = "#efefef" } = $$props;
@@ -4038,43 +2607,12 @@ function instance$8($$self, $$props, $$invalidate) {
 	}
 
 	let backgroundImage;
-	const writable_props = ["columns", "columnStrokeWidth", "columnStrokeColor"];
-
-	Object.keys($$props).forEach(key => {
-		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console.warn(`<Columns> was created with unknown prop '${key}'`);
-	});
-
-	let { $$slots = {}, $$scope } = $$props;
-	validate_slots("Columns", $$slots, []);
 
 	$$self.$set = $$props => {
 		if ("columns" in $$props) $$invalidate(1, columns = $$props.columns);
 		if ("columnStrokeWidth" in $$props) $$invalidate(2, columnStrokeWidth = $$props.columnStrokeWidth);
 		if ("columnStrokeColor" in $$props) $$invalidate(3, columnStrokeColor = $$props.columnStrokeColor);
 	};
-
-	$$self.$capture_state = () => ({
-		getContext,
-		onMount,
-		Column,
-		columns,
-		columnStrokeWidth,
-		columnStrokeColor,
-		lineAt,
-		createBackground,
-		backgroundImage
-	});
-
-	$$self.$inject_state = $$props => {
-		if ("columns" in $$props) $$invalidate(1, columns = $$props.columns);
-		if ("columnStrokeWidth" in $$props) $$invalidate(2, columnStrokeWidth = $$props.columnStrokeWidth);
-		if ("columnStrokeColor" in $$props) $$invalidate(3, columnStrokeColor = $$props.columnStrokeColor);
-		if ("backgroundImage" in $$props) $$invalidate(0, backgroundImage = $$props.backgroundImage);
-	};
-
-	if ($$props && "$$inject" in $$props) {
-		$$self.$inject_state($$props.$$inject);
-	}
 
 	$$self.$$.update = () => {
 		if ($$self.$$.dirty & /*columns*/ 2) {
@@ -4087,114 +2625,67 @@ function instance$8($$self, $$props, $$invalidate) {
 	return [backgroundImage, columns, columnStrokeWidth, columnStrokeColor];
 }
 
-class Columns extends SvelteComponentDev {
+class Columns extends SvelteComponent {
 	constructor(options) {
-		super(options);
+		super();
 
-		init(this, options, instance$8, create_fragment$8, safe_not_equal, {
+		init(this, options, instance$6, create_fragment$6, safe_not_equal, {
 			columns: 1,
 			columnStrokeWidth: 2,
 			columnStrokeColor: 3
 		});
-
-		dispatch_dev("SvelteRegisterComponent", {
-			component: this,
-			tagName: "Columns",
-			options,
-			id: create_fragment$8.name
-		});
-	}
-
-	get columns() {
-		throw new Error("<Columns>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set columns(value) {
-		throw new Error("<Columns>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get columnStrokeWidth() {
-		throw new Error("<Columns>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set columnStrokeWidth(value) {
-		throw new Error("<Columns>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get columnStrokeColor() {
-		throw new Error("<Columns>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set columnStrokeColor(value) {
-		throw new Error("<Columns>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
 	}
 }
 
-/* src\ui\Resizer.svelte generated by Svelte v3.23.0 */
-const file$8 = "src\\ui\\Resizer.svelte";
+/* src/ui/Resizer.svelte generated by Svelte v3.23.0 */
 
-function create_fragment$9(ctx) {
+function create_fragment$7(ctx) {
 	let div;
 	let mounted;
 	let dispose;
 
-	const block = {
-		c: function create() {
+	return {
+		c() {
 			div = element("div");
-			attr_dev(div, "class", "sg-resize svelte-1cpm1hk");
+			attr(div, "class", "sg-resize svelte-v0xg82");
 			set_style(div, "left", /*x*/ ctx[0] + "px");
-			add_location(div, file$8, 38, 0, 991);
 		},
-		l: function claim(nodes) {
-			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
-		},
-		m: function mount(target, anchor) {
-			insert_dev(target, div, anchor);
+		m(target, anchor) {
+			insert(target, div, anchor);
 
 			if (!mounted) {
 				dispose = action_destroyer(ctx[1].call(null, div));
 				mounted = true;
 			}
 		},
-		p: function update(ctx, [dirty]) {
+		p(ctx, [dirty]) {
 			if (dirty & /*x*/ 1) {
 				set_style(div, "left", /*x*/ ctx[0] + "px");
 			}
 		},
 		i: noop,
 		o: noop,
-		d: function destroy(detaching) {
-			if (detaching) detach_dev(div);
+		d(detaching) {
+			if (detaching) detach(div);
 			mounted = false;
 			dispose();
 		}
 	};
-
-	dispatch_dev("SvelteRegisterBlock", {
-		block,
-		id: create_fragment$9.name,
-		type: "component",
-		source: "",
-		ctx
-	});
-
-	return block;
 }
 
-function instance$9($$self, $$props, $$invalidate) {
+function instance$7($$self, $$props, $$invalidate) {
 	const dispatch = createEventDispatcher();
 	let { x = 240 } = $$props;
 	let { container } = $$props;
-	let dragging = false;
 
 	const dragOptions = {
 		onDrag: event => {
-			($$invalidate(0, x = event.x), dragging = true);
+			($$invalidate(0, x = event.x), true);
 			dispatch("resize", { left: x });
 			setCursor("col-resize");
 		},
 		onDrop: event => {
-			($$invalidate(0, x = event.x), dragging = false);
+			($$invalidate(0, x = event.x), false);
 			dispatch("resize", { left: x });
 			setCursor("default");
 		},
@@ -4210,42 +2701,10 @@ function instance$9($$self, $$props, $$invalidate) {
 		return new Draggable(node, dragOptions);
 	}
 
-	const writable_props = ["x", "container"];
-
-	Object.keys($$props).forEach(key => {
-		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console.warn(`<Resizer> was created with unknown prop '${key}'`);
-	});
-
-	let { $$slots = {}, $$scope } = $$props;
-	validate_slots("Resizer", $$slots, []);
-
 	$$self.$set = $$props => {
 		if ("x" in $$props) $$invalidate(0, x = $$props.x);
 		if ("container" in $$props) $$invalidate(2, container = $$props.container);
 	};
-
-	$$self.$capture_state = () => ({
-		createEventDispatcher,
-		onMount,
-		dispatch,
-		Draggable,
-		setCursor,
-		x,
-		container,
-		dragging,
-		dragOptions,
-		resizer
-	});
-
-	$$self.$inject_state = $$props => {
-		if ("x" in $$props) $$invalidate(0, x = $$props.x);
-		if ("container" in $$props) $$invalidate(2, container = $$props.container);
-		if ("dragging" in $$props) dragging = $$props.dragging;
-	};
-
-	if ($$props && "$$inject" in $$props) {
-		$$self.$inject_state($$props.$$inject);
-	}
 
 	$$self.$$.update = () => {
 		if ($$self.$$.dirty & /*container*/ 4) {
@@ -4256,40 +2715,10 @@ function instance$9($$self, $$props, $$invalidate) {
 	return [x, resizer, container];
 }
 
-class Resizer extends SvelteComponentDev {
+class Resizer extends SvelteComponent {
 	constructor(options) {
-		super(options);
-		init(this, options, instance$9, create_fragment$9, safe_not_equal, { x: 0, container: 2 });
-
-		dispatch_dev("SvelteRegisterComponent", {
-			component: this,
-			tagName: "Resizer",
-			options,
-			id: create_fragment$9.name
-		});
-
-		const { ctx } = this.$$;
-		const props = options.props || {};
-
-		if (/*container*/ ctx[2] === undefined && !("container" in props)) {
-			console.warn("<Resizer> was created without expected prop 'container'");
-		}
-	}
-
-	get x() {
-		throw new Error("<Resizer>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set x(value) {
-		throw new Error("<Resizer>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get container() {
-		throw new Error("<Resizer>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set container(value) {
-		throw new Error("<Resizer>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+		super();
+		init(this, options, instance$7, create_fragment$7, safe_not_equal, { x: 0, container: 2 });
 	}
 }
 
@@ -4476,10 +2905,7 @@ function onEvent(e) {
     }
 }
 
-/* src\Gantt.svelte generated by Svelte v3.23.0 */
-
-const { console: console_1$2 } = globals;
-const file$9 = "src\\Gantt.svelte";
+/* src/Gantt.svelte generated by Svelte v3.23.0 */
 
 function get_each_context$2(ctx, list, i) {
 	const child_ctx = ctx.slice();
@@ -4542,10 +2968,7 @@ function create_each_block_5(ctx) {
 			switch_instance_props = assign(switch_instance_props, switch_instance_spread_levels[i]);
 		}
 
-		return {
-			props: switch_instance_props,
-			$$inline: true
-		};
+		return { props: switch_instance_props };
 	}
 
 	if (switch_value) {
@@ -4557,28 +2980,27 @@ function create_each_block_5(ctx) {
 			props: {
 				x: /*tableWidth*/ ctx[1],
 				container: /*ganttElement*/ ctx[9]
-			},
-			$$inline: true
+			}
 		});
 
 	resizer.$on("resize", /*onResize*/ ctx[42]);
 
-	const block = {
-		c: function create() {
+	return {
+		c() {
 			if (switch_instance) create_component(switch_instance.$$.fragment);
 			t = space();
 			create_component(resizer.$$.fragment);
 		},
-		m: function mount(target, anchor) {
+		m(target, anchor) {
 			if (switch_instance) {
 				mount_component(switch_instance, target, anchor);
 			}
 
-			insert_dev(target, t, anchor);
+			insert(target, t, anchor);
 			mount_component(resizer, target, anchor);
 			current = true;
 		},
-		p: function update(ctx, dirty) {
+		p(ctx, dirty) {
 			const switch_instance_changes = (dirty[0] & /*rowContainerHeight, paddingTop, paddingBottom, tableWidth, visibleRows*/ 983042 | dirty[1] & /*$$restProps*/ 16384)
 			? get_spread_update(switch_instance_spread_levels, [
 					dirty[0] & /*rowContainerHeight*/ 65536 && {
@@ -4622,33 +3044,23 @@ function create_each_block_5(ctx) {
 			if (dirty[0] & /*ganttElement*/ 512) resizer_changes.container = /*ganttElement*/ ctx[9];
 			resizer.$set(resizer_changes);
 		},
-		i: function intro(local) {
+		i(local) {
 			if (current) return;
 			if (switch_instance) transition_in(switch_instance.$$.fragment, local);
 			transition_in(resizer.$$.fragment, local);
 			current = true;
 		},
-		o: function outro(local) {
+		o(local) {
 			if (switch_instance) transition_out(switch_instance.$$.fragment, local);
 			transition_out(resizer.$$.fragment, local);
 			current = false;
 		},
-		d: function destroy(detaching) {
+		d(detaching) {
 			if (switch_instance) destroy_component(switch_instance, detaching);
-			if (detaching) detach_dev(t);
+			if (detaching) detach(t);
 			destroy_component(resizer, detaching);
 		}
 	};
-
-	dispatch_dev("SvelteRegisterBlock", {
-		block,
-		id: create_each_block_5.name,
-		type: "each",
-		source: "(608:4) {#each ganttTableModules as module}",
-		ctx
-	});
-
-	return block;
 }
 
 // (619:20) {#each $allTimeRanges as timeRange (timeRange.id)}
@@ -4662,109 +3074,82 @@ function create_each_block_4(key_1, ctx) {
 		timerangeheader_props = assign(timerangeheader_props, timerangeheader_spread_levels[i]);
 	}
 
-	const timerangeheader = new TimeRangeHeader({
-			props: timerangeheader_props,
-			$$inline: true
-		});
+	const timerangeheader = new TimeRangeHeader({ props: timerangeheader_props });
 
-	const block = {
+	return {
 		key: key_1,
 		first: null,
-		c: function create() {
+		c() {
 			first = empty();
 			create_component(timerangeheader.$$.fragment);
 			this.first = first;
 		},
-		m: function mount(target, anchor) {
-			insert_dev(target, first, anchor);
+		m(target, anchor) {
+			insert(target, first, anchor);
 			mount_component(timerangeheader, target, anchor);
 			current = true;
 		},
-		p: function update(ctx, dirty) {
+		p(ctx, dirty) {
 			const timerangeheader_changes = (dirty[0] & /*$allTimeRanges*/ 33554432)
 			? get_spread_update(timerangeheader_spread_levels, [get_spread_object(/*timeRange*/ ctx[127])])
 			: {};
 
 			timerangeheader.$set(timerangeheader_changes);
 		},
-		i: function intro(local) {
+		i(local) {
 			if (current) return;
 			transition_in(timerangeheader.$$.fragment, local);
 			current = true;
 		},
-		o: function outro(local) {
+		o(local) {
 			transition_out(timerangeheader.$$.fragment, local);
 			current = false;
 		},
-		d: function destroy(detaching) {
-			if (detaching) detach_dev(first);
+		d(detaching) {
+			if (detaching) detach(first);
 			destroy_component(timerangeheader, detaching);
 		}
 	};
-
-	dispatch_dev("SvelteRegisterBlock", {
-		block,
-		id: create_each_block_4.name,
-		type: "each",
-		source: "(619:20) {#each $allTimeRanges as timeRange (timeRange.id)}",
-		ctx
-	});
-
-	return block;
 }
 
 // (632:24) {#each visibleRows as row (row.model.id)}
 function create_each_block_3(key_1, ctx) {
 	let first;
 	let current;
+	const row = new Row({ props: { row: /*row*/ ctx[130] } });
 
-	const row = new Row({
-			props: { row: /*row*/ ctx[130] },
-			$$inline: true
-		});
-
-	const block = {
+	return {
 		key: key_1,
 		first: null,
-		c: function create() {
+		c() {
 			first = empty();
 			create_component(row.$$.fragment);
 			this.first = first;
 		},
-		m: function mount(target, anchor) {
-			insert_dev(target, first, anchor);
+		m(target, anchor) {
+			insert(target, first, anchor);
 			mount_component(row, target, anchor);
 			current = true;
 		},
-		p: function update(ctx, dirty) {
+		p(ctx, dirty) {
 			const row_changes = {};
 			if (dirty[0] & /*visibleRows*/ 524288) row_changes.row = /*row*/ ctx[130];
 			row.$set(row_changes);
 		},
-		i: function intro(local) {
+		i(local) {
 			if (current) return;
 			transition_in(row.$$.fragment, local);
 			current = true;
 		},
-		o: function outro(local) {
+		o(local) {
 			transition_out(row.$$.fragment, local);
 			current = false;
 		},
-		d: function destroy(detaching) {
-			if (detaching) detach_dev(first);
+		d(detaching) {
+			if (detaching) detach(first);
 			destroy_component(row, detaching);
 		}
 	};
-
-	dispatch_dev("SvelteRegisterBlock", {
-		block,
-		id: create_each_block_3.name,
-		type: "each",
-		source: "(632:24) {#each visibleRows as row (row.model.id)}",
-		ctx
-	});
-
-	return block;
 }
 
 // (638:20) {#each $allTimeRanges as timeRange (timeRange.id)}
@@ -4778,52 +3163,42 @@ function create_each_block_2(key_1, ctx) {
 		timerange_props = assign(timerange_props, timerange_spread_levels[i]);
 	}
 
-	const timerange = new TimeRange({ props: timerange_props, $$inline: true });
+	const timerange = new TimeRange({ props: timerange_props });
 
-	const block = {
+	return {
 		key: key_1,
 		first: null,
-		c: function create() {
+		c() {
 			first = empty();
 			create_component(timerange.$$.fragment);
 			this.first = first;
 		},
-		m: function mount(target, anchor) {
-			insert_dev(target, first, anchor);
+		m(target, anchor) {
+			insert(target, first, anchor);
 			mount_component(timerange, target, anchor);
 			current = true;
 		},
-		p: function update(ctx, dirty) {
+		p(ctx, dirty) {
 			const timerange_changes = (dirty[0] & /*$allTimeRanges*/ 33554432)
 			? get_spread_update(timerange_spread_levels, [get_spread_object(/*timeRange*/ ctx[127])])
 			: {};
 
 			timerange.$set(timerange_changes);
 		},
-		i: function intro(local) {
+		i(local) {
 			if (current) return;
 			transition_in(timerange.$$.fragment, local);
 			current = true;
 		},
-		o: function outro(local) {
+		o(local) {
 			transition_out(timerange.$$.fragment, local);
 			current = false;
 		},
-		d: function destroy(detaching) {
-			if (detaching) detach_dev(first);
+		d(detaching) {
+			if (detaching) detach(first);
 			destroy_component(timerange, detaching);
 		}
 	};
-
-	dispatch_dev("SvelteRegisterBlock", {
-		block,
-		id: create_each_block_2.name,
-		type: "each",
-		source: "(638:20) {#each $allTimeRanges as timeRange (timeRange.id)}",
-		ctx
-	});
-
-	return block;
 }
 
 // (642:20) {#each visibleTasks as task (task.model.id)}
@@ -4846,22 +3221,22 @@ function create_each_block_1(key_1, ctx) {
 		task_props = assign(task_props, task_spread_levels[i]);
 	}
 
-	const task = new Task({ props: task_props, $$inline: true });
+	const task = new Task({ props: task_props });
 
-	const block = {
+	return {
 		key: key_1,
 		first: null,
-		c: function create() {
+		c() {
 			first = empty();
 			create_component(task.$$.fragment);
 			this.first = first;
 		},
-		m: function mount(target, anchor) {
-			insert_dev(target, first, anchor);
+		m(target, anchor) {
+			insert(target, first, anchor);
 			mount_component(task, target, anchor);
 			current = true;
 		},
-		p: function update(ctx, dirty) {
+		p(ctx, dirty) {
 			const task_changes = (dirty[0] & /*visibleTasks*/ 1048576)
 			? get_spread_update(task_spread_levels, [
 					{ model: /*task*/ ctx[124].model },
@@ -4875,30 +3250,20 @@ function create_each_block_1(key_1, ctx) {
 
 			task.$set(task_changes);
 		},
-		i: function intro(local) {
+		i(local) {
 			if (current) return;
 			transition_in(task.$$.fragment, local);
 			current = true;
 		},
-		o: function outro(local) {
+		o(local) {
 			transition_out(task.$$.fragment, local);
 			current = false;
 		},
-		d: function destroy(detaching) {
-			if (detaching) detach_dev(first);
+		d(detaching) {
+			if (detaching) detach(first);
 			destroy_component(task, detaching);
 		}
 	};
-
-	dispatch_dev("SvelteRegisterBlock", {
-		block,
-		id: create_each_block_1.name,
-		type: "each",
-		source: "(642:20) {#each visibleTasks as task (task.model.id)}",
-		ctx
-	});
-
-	return block;
 }
 
 // (647:16) {#each ganttBodyModules as module}
@@ -4922,10 +3287,7 @@ function create_each_block$2(ctx) {
 			switch_instance_props = assign(switch_instance_props, switch_instance_spread_levels[i]);
 		}
 
-		return {
-			props: switch_instance_props,
-			$$inline: true
-		};
+		return { props: switch_instance_props };
 	}
 
 	if (switch_value) {
@@ -4933,20 +3295,20 @@ function create_each_block$2(ctx) {
 		switch_instance.$on("init", onModuleInit);
 	}
 
-	const block = {
-		c: function create() {
+	return {
+		c() {
 			if (switch_instance) create_component(switch_instance.$$.fragment);
 			switch_instance_anchor = empty();
 		},
-		m: function mount(target, anchor) {
+		m(target, anchor) {
 			if (switch_instance) {
 				mount_component(switch_instance, target, anchor);
 			}
 
-			insert_dev(target, switch_instance_anchor, anchor);
+			insert(target, switch_instance_anchor, anchor);
 			current = true;
 		},
-		p: function update(ctx, dirty) {
+		p(ctx, dirty) {
 			const switch_instance_changes = (dirty[0] & /*paddingTop, paddingBottom, visibleRows*/ 917504 | dirty[1] & /*$$restProps*/ 16384)
 			? get_spread_update(switch_instance_spread_levels, [
 					dirty[0] & /*paddingTop*/ 131072 && { paddingTop: /*paddingTop*/ ctx[17] },
@@ -4981,33 +3343,23 @@ function create_each_block$2(ctx) {
 				switch_instance.$set(switch_instance_changes);
 			}
 		},
-		i: function intro(local) {
+		i(local) {
 			if (current) return;
 			if (switch_instance) transition_in(switch_instance.$$.fragment, local);
 			current = true;
 		},
-		o: function outro(local) {
+		o(local) {
 			if (switch_instance) transition_out(switch_instance.$$.fragment, local);
 			current = false;
 		},
-		d: function destroy(detaching) {
-			if (detaching) detach_dev(switch_instance_anchor);
+		d(detaching) {
+			if (detaching) detach(switch_instance_anchor);
 			if (switch_instance) destroy_component(switch_instance, detaching);
 		}
 	};
-
-	dispatch_dev("SvelteRegisterBlock", {
-		block,
-		id: create_each_block$2.name,
-		type: "each",
-		source: "(647:16) {#each ganttBodyModules as module}",
-		ctx
-	});
-
-	return block;
 }
 
-function create_fragment$a(ctx) {
+function create_fragment$8(ctx) {
 	let div9;
 	let t0;
 	let div8;
@@ -5040,7 +3392,6 @@ function create_fragment$a(ctx) {
 	let mounted;
 	let dispose;
 	let each_value_5 = /*ganttTableModules*/ ctx[5];
-	validate_each_argument(each_value_5);
 	let each_blocks_5 = [];
 
 	for (let i = 0; i < each_value_5.length; i += 1) {
@@ -5056,15 +3407,12 @@ function create_fragment$a(ctx) {
 				headers: /*headers*/ ctx[0],
 				columnUnit: /*columnUnit*/ ctx[2],
 				columnOffset: /*columnOffset*/ ctx[3]
-			},
-			$$inline: true
+			}
 		});
 
 	columnheader.$on("dateSelected", /*onDateSelected*/ ctx[44]);
 	let each_value_4 = /*$allTimeRanges*/ ctx[25];
-	validate_each_argument(each_value_4);
 	const get_key = ctx => /*timeRange*/ ctx[127].id;
-	validate_each_keys(ctx, each_value_4, get_each_context_4, get_key);
 
 	for (let i = 0; i < each_value_4.length; i += 1) {
 		let child_ctx = get_each_context_4(ctx, each_value_4, i);
@@ -5077,14 +3425,11 @@ function create_fragment$a(ctx) {
 				columns: /*columns*/ ctx[13],
 				columnStrokeColor: /*columnStrokeColor*/ ctx[7],
 				columnStrokeWidth: /*columnStrokeWidth*/ ctx[8]
-			},
-			$$inline: true
+			}
 		});
 
 	let each_value_3 = /*visibleRows*/ ctx[19];
-	validate_each_argument(each_value_3);
 	const get_key_1 = ctx => /*row*/ ctx[130].model.id;
-	validate_each_keys(ctx, each_value_3, get_each_context_3, get_key_1);
 
 	for (let i = 0; i < each_value_3.length; i += 1) {
 		let child_ctx = get_each_context_3(ctx, each_value_3, i);
@@ -5093,9 +3438,7 @@ function create_fragment$a(ctx) {
 	}
 
 	let each_value_2 = /*$allTimeRanges*/ ctx[25];
-	validate_each_argument(each_value_2);
 	const get_key_2 = ctx => /*timeRange*/ ctx[127].id;
-	validate_each_keys(ctx, each_value_2, get_each_context_2, get_key_2);
 
 	for (let i = 0; i < each_value_2.length; i += 1) {
 		let child_ctx = get_each_context_2(ctx, each_value_2, i);
@@ -5104,9 +3447,7 @@ function create_fragment$a(ctx) {
 	}
 
 	let each_value_1 = /*visibleTasks*/ ctx[20];
-	validate_each_argument(each_value_1);
 	const get_key_3 = ctx => /*task*/ ctx[124].model.id;
-	validate_each_keys(ctx, each_value_1, get_each_context_1, get_key_3);
 
 	for (let i = 0; i < each_value_1.length; i += 1) {
 		let child_ctx = get_each_context_1(ctx, each_value_1, i);
@@ -5115,7 +3456,6 @@ function create_fragment$a(ctx) {
 	}
 
 	let each_value = /*ganttBodyModules*/ ctx[6];
-	validate_each_argument(each_value);
 	let each_blocks = [];
 
 	for (let i = 0; i < each_value.length; i += 1) {
@@ -5126,8 +3466,8 @@ function create_fragment$a(ctx) {
 		each_blocks[i] = null;
 	});
 
-	const block = {
-		c: function create() {
+	return {
+		c() {
 			div9 = element("div");
 
 			for (let i = 0; i < each_blocks_5.length; i += 1) {
@@ -5177,52 +3517,39 @@ function create_fragment$a(ctx) {
 				each_blocks[i].c();
 			}
 
-			attr_dev(div0, "class", "header-container svelte-12fxs8g");
+			attr(div0, "class", "header-container svelte-8uspd");
 			set_style(div0, "width", /*$_width*/ ctx[22] + "px");
-			add_location(div0, file$9, 616, 16, 19838);
-			attr_dev(div1, "class", "sg-header-scroller svelte-12fxs8g");
-			add_location(div1, file$9, 615, 12, 19759);
-			attr_dev(div2, "class", "sg-header svelte-12fxs8g");
+			attr(div1, "class", "sg-header-scroller svelte-8uspd");
+			attr(div2, "class", "sg-header svelte-8uspd");
 			add_render_callback(() => /*div2_elementresize_handler*/ ctx[116].call(div2));
 			toggle_class(div2, "right-scrollbar-visible", /*rightScrollbarVisible*/ ctx[15]);
-			add_location(div2, file$9, 614, 8, 19598);
 			set_style(div3, "transform", "translateY(" + /*paddingTop*/ ctx[17] + "px)");
-			add_location(div3, file$9, 630, 20, 20706);
-			attr_dev(div4, "class", "sg-rows svelte-12fxs8g");
+			attr(div4, "class", "sg-rows svelte-8uspd");
 			set_style(div4, "height", /*rowContainerHeight*/ ctx[16] + "px");
-			add_location(div4, file$9, 629, 16, 20599);
-			attr_dev(div5, "class", "sg-foreground svelte-12fxs8g");
-			add_location(div5, file$9, 636, 16, 20971);
-			attr_dev(div6, "class", "content svelte-12fxs8g");
+			attr(div5, "class", "sg-foreground svelte-8uspd");
+			attr(div6, "class", "content svelte-8uspd");
 			set_style(div6, "width", /*$_width*/ ctx[22] + "px");
-			add_location(div6, file$9, 627, 12, 20448);
-			attr_dev(div7, "class", "sg-timeline-body svelte-12fxs8g");
+			attr(div7, "class", "sg-timeline-body svelte-8uspd");
 			add_render_callback(() => /*div7_elementresize_handler*/ ctx[119].call(div7));
 			toggle_class(div7, "zooming", /*zooming*/ ctx[14]);
-			add_location(div7, file$9, 625, 8, 20234);
-			attr_dev(div8, "class", "sg-timeline sg-view svelte-12fxs8g");
-			add_location(div8, file$9, 613, 4, 19555);
-			attr_dev(div9, "class", div9_class_value = "sg-gantt " + /*classes*/ ctx[4] + " svelte-12fxs8g");
+			attr(div8, "class", "sg-timeline sg-view svelte-8uspd");
+			attr(div9, "class", div9_class_value = "sg-gantt " + /*classes*/ ctx[4] + " svelte-8uspd");
 			toggle_class(div9, "sg-disable-transition", !/*disableTransition*/ ctx[21]);
-			add_location(div9, file$9, 606, 0, 19085);
 		},
-		l: function claim(nodes) {
-			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
-		},
-		m: function mount(target, anchor) {
-			insert_dev(target, div9, anchor);
+		m(target, anchor) {
+			insert(target, div9, anchor);
 
 			for (let i = 0; i < each_blocks_5.length; i += 1) {
 				each_blocks_5[i].m(div9, null);
 			}
 
-			append_dev(div9, t0);
-			append_dev(div9, div8);
-			append_dev(div8, div2);
-			append_dev(div2, div1);
-			append_dev(div1, div0);
+			append(div9, t0);
+			append(div9, div8);
+			append(div8, div2);
+			append(div2, div1);
+			append(div1, div0);
 			mount_component(columnheader, div0, null);
-			append_dev(div0, t1);
+			append(div0, t1);
 
 			for (let i = 0; i < each_blocks_4.length; i += 1) {
 				each_blocks_4[i].m(div0, null);
@@ -5230,33 +3557,33 @@ function create_fragment$a(ctx) {
 
 			/*div2_binding*/ ctx[115](div2);
 			div2_resize_listener = add_resize_listener(div2, /*div2_elementresize_handler*/ ctx[116].bind(div2));
-			append_dev(div8, t2);
-			append_dev(div8, div7);
-			append_dev(div7, div6);
+			append(div8, t2);
+			append(div8, div7);
+			append(div7, div6);
 			mount_component(columns_1, div6, null);
-			append_dev(div6, t3);
-			append_dev(div6, div4);
-			append_dev(div4, div3);
+			append(div6, t3);
+			append(div6, div4);
+			append(div4, div3);
 
 			for (let i = 0; i < each_blocks_3.length; i += 1) {
 				each_blocks_3[i].m(div3, null);
 			}
 
 			/*div4_binding*/ ctx[117](div4);
-			append_dev(div6, t4);
-			append_dev(div6, div5);
+			append(div6, t4);
+			append(div6, div5);
 
 			for (let i = 0; i < each_blocks_2.length; i += 1) {
 				each_blocks_2[i].m(div5, null);
 			}
 
-			append_dev(div5, t5);
+			append(div5, t5);
 
 			for (let i = 0; i < each_blocks_1.length; i += 1) {
 				each_blocks_1[i].m(div5, null);
 			}
 
-			append_dev(div6, t6);
+			append(div6, t6);
 
 			for (let i = 0; i < each_blocks.length; i += 1) {
 				each_blocks[i].m(div6, null);
@@ -5271,18 +3598,17 @@ function create_fragment$a(ctx) {
 				dispose = [
 					action_destroyer(ctx[41].call(null, div1)),
 					action_destroyer(ctx[40].call(null, div7)),
-					listen_dev(div7, "wheel", /*onwheel*/ ctx[43], false, false, false),
-					listen_dev(div9, "click", onEvent, false, false, false),
-					listen_dev(div9, "mouseover", onEvent, false, false, false)
+					listen(div7, "wheel", /*onwheel*/ ctx[43]),
+					listen(div9, "click", onEvent),
+					listen(div9, "mouseover", onEvent)
 				];
 
 				mounted = true;
 			}
 		},
-		p: function update(ctx, dirty) {
+		p(ctx, dirty) {
 			if (dirty[0] & /*tableWidth, ganttElement, ganttTableModules, rowContainerHeight, paddingTop, paddingBottom, visibleRows*/ 983586 | dirty[1] & /*onResize, $$restProps*/ 18432) {
 				each_value_5 = /*ganttTableModules*/ ctx[5];
-				validate_each_argument(each_value_5);
 				let i;
 
 				for (i = 0; i < each_value_5.length; i += 1) {
@@ -5316,9 +3642,7 @@ function create_fragment$a(ctx) {
 
 			if (dirty[0] & /*$allTimeRanges*/ 33554432) {
 				const each_value_4 = /*$allTimeRanges*/ ctx[25];
-				validate_each_argument(each_value_4);
 				group_outros();
-				validate_each_keys(ctx, each_value_4, get_each_context_4, get_key);
 				each_blocks_4 = update_keyed_each(each_blocks_4, dirty, get_key, 1, ctx, each_value_4, each1_lookup, div0, outro_and_destroy_block, create_each_block_4, null, get_each_context_4);
 				check_outros();
 			}
@@ -5339,9 +3663,7 @@ function create_fragment$a(ctx) {
 
 			if (dirty[0] & /*visibleRows*/ 524288) {
 				const each_value_3 = /*visibleRows*/ ctx[19];
-				validate_each_argument(each_value_3);
 				group_outros();
-				validate_each_keys(ctx, each_value_3, get_each_context_3, get_key_1);
 				each_blocks_3 = update_keyed_each(each_blocks_3, dirty, get_key_1, 1, ctx, each_value_3, each2_lookup, div3, outro_and_destroy_block, create_each_block_3, null, get_each_context_3);
 				check_outros();
 			}
@@ -5356,25 +3678,20 @@ function create_fragment$a(ctx) {
 
 			if (dirty[0] & /*$allTimeRanges*/ 33554432) {
 				const each_value_2 = /*$allTimeRanges*/ ctx[25];
-				validate_each_argument(each_value_2);
 				group_outros();
-				validate_each_keys(ctx, each_value_2, get_each_context_2, get_key_2);
 				each_blocks_2 = update_keyed_each(each_blocks_2, dirty, get_key_2, 1, ctx, each_value_2, each3_lookup, div5, outro_and_destroy_block, create_each_block_2, t5, get_each_context_2);
 				check_outros();
 			}
 
 			if (dirty[0] & /*visibleTasks*/ 1048576) {
 				const each_value_1 = /*visibleTasks*/ ctx[20];
-				validate_each_argument(each_value_1);
 				group_outros();
-				validate_each_keys(ctx, each_value_1, get_each_context_1, get_key_3);
 				each_blocks_1 = update_keyed_each(each_blocks_1, dirty, get_key_3, 1, ctx, each_value_1, each4_lookup, div5, outro_and_destroy_block, create_each_block_1, null, get_each_context_1);
 				check_outros();
 			}
 
 			if (dirty[0] & /*ganttBodyModules, paddingTop, paddingBottom, visibleRows*/ 917568 | dirty[1] & /*$$restProps*/ 16384) {
 				each_value = /*ganttBodyModules*/ ctx[6];
-				validate_each_argument(each_value);
 				let i;
 
 				for (i = 0; i < each_value.length; i += 1) {
@@ -5408,15 +3725,15 @@ function create_fragment$a(ctx) {
 				toggle_class(div7, "zooming", /*zooming*/ ctx[14]);
 			}
 
-			if (!current || dirty[0] & /*classes*/ 16 && div9_class_value !== (div9_class_value = "sg-gantt " + /*classes*/ ctx[4] + " svelte-12fxs8g")) {
-				attr_dev(div9, "class", div9_class_value);
+			if (!current || dirty[0] & /*classes*/ 16 && div9_class_value !== (div9_class_value = "sg-gantt " + /*classes*/ ctx[4] + " svelte-8uspd")) {
+				attr(div9, "class", div9_class_value);
 			}
 
 			if (dirty[0] & /*classes, disableTransition*/ 2097168) {
 				toggle_class(div9, "sg-disable-transition", !/*disableTransition*/ ctx[21]);
 			}
 		},
-		i: function intro(local) {
+		i(local) {
 			if (current) return;
 
 			for (let i = 0; i < each_value_5.length; i += 1) {
@@ -5449,7 +3766,7 @@ function create_fragment$a(ctx) {
 
 			current = true;
 		},
-		o: function outro(local) {
+		o(local) {
 			each_blocks_5 = each_blocks_5.filter(Boolean);
 
 			for (let i = 0; i < each_blocks_5.length; i += 1) {
@@ -5484,8 +3801,8 @@ function create_fragment$a(ctx) {
 
 			current = false;
 		},
-		d: function destroy(detaching) {
-			if (detaching) detach_dev(div9);
+		d(detaching) {
+			if (detaching) detach(div9);
 			destroy_each(each_blocks_5, detaching);
 			destroy_component(columnheader);
 
@@ -5519,23 +3836,13 @@ function create_fragment$a(ctx) {
 			run_all(dispose);
 		}
 	};
-
-	dispatch_dev("SvelteRegisterBlock", {
-		block,
-		id: create_fragment$a.name,
-		type: "component",
-		source: "",
-		ctx
-	});
-
-	return block;
 }
 
 function onModuleInit(module) {
 	
 }
 
-function instance$a($$self, $$props, $$invalidate) {
+function instance$8($$self, $$props, $$invalidate) {
 	const omit_props_names = [
 		"rows","tasks","timeRanges","rowPadding","rowHeight","from","to","minWidth","fitWidth","classes","headers","zoomLevels","taskContent","tableWidth","resizeHandleWidth","onTaskButtonClick","magnetUnit","magnetOffset","columnUnit","columnOffset","ganttTableModules","ganttBodyModules","reflectOnParentRows","reflectOnChildRows","columnStrokeColor","columnStrokeWidth","columnService","api","taskFactory","rowFactory","dndManager","timeRangeFactory","utils","refreshTimeRanges","refreshTasks","getRowContainer","selectTask","unselectTasks","scrollToRow","scrollToTask","updateTask","updateTasks","updateRow","updateRows","getRow","getTask","getTasks"
 	];
@@ -5560,17 +3867,11 @@ function instance$a($$self, $$props, $$invalidate) {
 	let $headerHeight;
 	let $allTimeRanges;
 	let $visibleWidth;
-	validate_store(taskStore, "taskStore");
 	component_subscribe($$self, taskStore, $$value => $$invalidate(98, $taskStore = $$value));
-	validate_store(rowStore, "rowStore");
 	component_subscribe($$self, rowStore, $$value => $$invalidate(102, $rowStore = $$value));
-	validate_store(allTasks, "allTasks");
 	component_subscribe($$self, allTasks, $$value => $$invalidate(103, $allTasks = $$value));
-	validate_store(allRows, "allRows");
 	component_subscribe($$self, allRows, $$value => $$invalidate(104, $allRows = $$value));
-	validate_store(rowTaskCache, "rowTaskCache");
 	component_subscribe($$self, rowTaskCache, $$value => $$invalidate(105, $rowTaskCache = $$value));
-	validate_store(allTimeRanges, "allTimeRanges");
 	component_subscribe($$self, allTimeRanges, $$value => $$invalidate(25, $allTimeRanges = $$value));
 	let ganttElement;
 	let mainHeaderContainer;
@@ -5585,23 +3886,18 @@ function instance$a($$self, $$props, $$invalidate) {
 	let { rowHeight = 52 } = $$props;
 	const _rowHeight = writable(rowHeight);
 	const _rowPadding = writable(rowPadding);
-	validate_store(_rowPadding, "_rowPadding");
 	component_subscribe($$self, _rowPadding, value => $$invalidate(101, $_rowPadding = value));
 	let { from } = $$props;
 	let { to } = $$props;
 	const _from = writable(from);
-	validate_store(_from, "_from");
 	component_subscribe($$self, _from, value => $$invalidate(92, $_from = value));
 	const _to = writable(to);
-	validate_store(_to, "_to");
 	component_subscribe($$self, _to, value => $$invalidate(93, $_to = value));
 	let { minWidth = 800 } = $$props;
 	let { fitWidth = false } = $$props;
 	const _minWidth = writable(minWidth);
-	validate_store(_minWidth, "_minWidth");
 	component_subscribe($$self, _minWidth, value => $$invalidate(94, $_minWidth = value));
 	const _fitWidth = writable(fitWidth);
-	validate_store(_fitWidth, "_fitWidth");
 	component_subscribe($$self, _fitWidth, value => $$invalidate(95, $_fitWidth = value));
 	let { classes = [] } = $$props;
 	let { headers = [{ unit: "day", format: "MMMM Do" }, { unit: "hour", format: "H:mm" }] } = $$props;
@@ -5637,20 +3933,16 @@ function instance$a($$self, $$props, $$invalidate) {
 	let { columnStrokeColor } = $$props;
 	let { columnStrokeWidth } = $$props;
 	const visibleWidth = writable();
-	validate_store(visibleWidth, "visibleWidth");
 	component_subscribe($$self, visibleWidth, value => $$invalidate(26, $visibleWidth = value));
 	const visibleHeight = writable();
-	validate_store(visibleHeight, "visibleHeight");
 	component_subscribe($$self, visibleHeight, value => $$invalidate(23, $visibleHeight = value));
 	const headerHeight = writable();
-	validate_store(headerHeight, "headerHeight");
 	component_subscribe($$self, headerHeight, value => $$invalidate(24, $headerHeight = value));
 
 	const _width = derived([visibleWidth, _minWidth, _fitWidth], ([visible, min, stretch]) => {
 		return stretch && visible > min ? visible : min;
 	});
 
-	validate_store(_width, "_width");
 	component_subscribe($$self, _width, value => $$invalidate(22, $_width = value));
 
 	const columnService = {
@@ -5702,7 +3994,6 @@ function instance$a($$self, $$props, $$invalidate) {
 	};
 
 	const columnWidth = writable(getPositionByDate($_from.clone().add(columnOffset, columnUnit), $_from, $_to, $_width) | 0);
-	validate_store(columnWidth, "columnWidth");
 	component_subscribe($$self, columnWidth, value => $$invalidate(96, $columnWidth = value));
 	let columnCount = Math.ceil($_width / $columnWidth);
 	let columns = getColumns($_from, columnCount, columnOffset, columnUnit, $columnWidth);
@@ -5725,7 +4016,6 @@ function instance$a($$self, $$props, $$invalidate) {
 	}
 
 	const dimensionsChanged = derived([columnWidth, _from, _to], () => ({}));
-	validate_store(dimensionsChanged, "dimensionsChanged");
 	component_subscribe($$self, dimensionsChanged, value => $$invalidate(97, $dimensionsChanged = value));
 
 	setContext("dimensions", {
@@ -5749,10 +4039,8 @@ function instance$a($$self, $$props, $$invalidate) {
 	});
 
 	const hoveredRow = writable();
-	validate_store(hoveredRow, "hoveredRow");
 	component_subscribe($$self, hoveredRow, value => $$invalidate(99, $hoveredRow = value));
 	const selectedRow = writable();
-	validate_store(selectedRow, "selectedRow");
 	component_subscribe($$self, selectedRow, value => $$invalidate(100, $selectedRow = value));
 	const ganttContext = { scrollables, hoveredRow, selectedRow };
 	setContext("gantt", ganttContext);
@@ -6089,8 +4377,6 @@ function instance$a($$self, $$props, $$invalidate) {
 	let visibleRows = [];
 	let visibleTasks;
 	let disableTransition = true;
-	let { $$slots = {}, $$scope } = $$props;
-	validate_slots("Gantt", $$slots, []);
 
 	function div2_binding($$value) {
 		binding_callbacks[$$value ? "unshift" : "push"](() => {
@@ -6158,218 +4444,6 @@ function instance$a($$self, $$props, $$invalidate) {
 		if ("columnStrokeColor" in $$new_props) $$invalidate(7, columnStrokeColor = $$new_props.columnStrokeColor);
 		if ("columnStrokeWidth" in $$new_props) $$invalidate(8, columnStrokeWidth = $$new_props.columnStrokeWidth);
 	};
-
-	$$self.$capture_state = () => ({
-		onMount,
-		setContext,
-		tick,
-		onDestroy,
-		writable,
-		derived,
-		moment,
-		ganttElement,
-		mainHeaderContainer,
-		mainContainer,
-		rowContainer,
-		scrollables,
-		mounted,
-		rowStore,
-		taskStore,
-		timeRangeStore,
-		allTasks,
-		allRows,
-		allTimeRanges,
-		rowTaskCache,
-		Task,
-		Row,
-		TimeRange,
-		TimeRangeHeader,
-		Milestone,
-		Columns,
-		ColumnHeader,
-		Resizer,
-		GanttUtils,
-		getPositionByDate,
-		getRelativePos,
-		debounce,
-		throttle,
-		SelectionManager,
-		GanttApi,
-		TaskFactory,
-		reflectTask,
-		RowFactory,
-		TimeRangeFactory,
-		DragDropManager,
-		findByPosition,
-		findByDate,
-		onEvent,
-		onDelegatedEvent,
-		offDelegatedEvent,
-		rows,
-		tasks,
-		timeRanges,
-		rowPadding,
-		rowHeight,
-		_rowHeight,
-		_rowPadding,
-		from,
-		to,
-		_from,
-		_to,
-		minWidth,
-		fitWidth,
-		_minWidth,
-		_fitWidth,
-		classes,
-		headers,
-		zoomLevels,
-		taskContent,
-		tableWidth,
-		resizeHandleWidth,
-		onTaskButtonClick,
-		magnetUnit,
-		magnetOffset,
-		columnUnit,
-		columnOffset,
-		ganttTableModules,
-		ganttBodyModules,
-		reflectOnParentRows,
-		reflectOnChildRows,
-		columnStrokeColor,
-		columnStrokeWidth,
-		visibleWidth,
-		visibleHeight,
-		headerHeight,
-		_width,
-		columnService,
-		columnWidth,
-		columnCount,
-		columns,
-		getColumns,
-		dimensionsChanged,
-		hoveredRow,
-		selectedRow,
-		ganttContext,
-		__scrollTop,
-		__scrollLeft,
-		scrollable,
-		horizontalScrollListener,
-		onResize,
-		zoomLevel,
-		zooming,
-		onwheel,
-		onDateSelected,
-		initRows,
-		initTasks,
-		initTimeRanges,
-		onModuleInit,
-		tickWithoutCSSTransition,
-		api,
-		selectionManager,
-		taskFactory,
-		rowFactory,
-		dndManager,
-		timeRangeFactory,
-		utils,
-		refreshTimeRanges,
-		refreshTasks,
-		getRowContainer,
-		selectTask,
-		unselectTasks,
-		scrollToRow,
-		scrollToTask,
-		updateTask,
-		updateTasks,
-		updateRow,
-		updateRows,
-		getRow,
-		getTask,
-		getTasks,
-		filteredRows,
-		rightScrollbarVisible,
-		rowContainerHeight,
-		startIndex,
-		endIndex,
-		paddingTop,
-		paddingBottom,
-		visibleRows,
-		visibleTasks,
-		disableTransition,
-		$_from,
-		$_to,
-		$_minWidth,
-		$_fitWidth,
-		$_width,
-		$columnWidth,
-		$dimensionsChanged,
-		$taskStore,
-		$hoveredRow,
-		$selectedRow,
-		$_rowPadding,
-		$rowStore,
-		$allTasks,
-		$allRows,
-		$rowTaskCache,
-		$visibleHeight,
-		$headerHeight,
-		$allTimeRanges,
-		$visibleWidth
-	});
-
-	$$self.$inject_state = $$new_props => {
-		if ("ganttElement" in $$props) $$invalidate(9, ganttElement = $$new_props.ganttElement);
-		if ("mainHeaderContainer" in $$props) $$invalidate(10, mainHeaderContainer = $$new_props.mainHeaderContainer);
-		if ("mainContainer" in $$props) $$invalidate(11, mainContainer = $$new_props.mainContainer);
-		if ("rowContainer" in $$props) $$invalidate(12, rowContainer = $$new_props.rowContainer);
-		if ("scrollables" in $$props) scrollables = $$new_props.scrollables;
-		if ("mounted" in $$props) $$invalidate(84, mounted = $$new_props.mounted);
-		if ("rows" in $$props) $$invalidate(49, rows = $$new_props.rows);
-		if ("tasks" in $$props) $$invalidate(50, tasks = $$new_props.tasks);
-		if ("timeRanges" in $$props) $$invalidate(51, timeRanges = $$new_props.timeRanges);
-		if ("rowPadding" in $$props) $$invalidate(52, rowPadding = $$new_props.rowPadding);
-		if ("rowHeight" in $$props) $$invalidate(53, rowHeight = $$new_props.rowHeight);
-		if ("from" in $$props) $$invalidate(54, from = $$new_props.from);
-		if ("to" in $$props) $$invalidate(55, to = $$new_props.to);
-		if ("minWidth" in $$props) $$invalidate(56, minWidth = $$new_props.minWidth);
-		if ("fitWidth" in $$props) $$invalidate(57, fitWidth = $$new_props.fitWidth);
-		if ("classes" in $$props) $$invalidate(4, classes = $$new_props.classes);
-		if ("headers" in $$props) $$invalidate(0, headers = $$new_props.headers);
-		if ("zoomLevels" in $$props) $$invalidate(58, zoomLevels = $$new_props.zoomLevels);
-		if ("taskContent" in $$props) $$invalidate(59, taskContent = $$new_props.taskContent);
-		if ("tableWidth" in $$props) $$invalidate(1, tableWidth = $$new_props.tableWidth);
-		if ("resizeHandleWidth" in $$props) $$invalidate(60, resizeHandleWidth = $$new_props.resizeHandleWidth);
-		if ("onTaskButtonClick" in $$props) $$invalidate(61, onTaskButtonClick = $$new_props.onTaskButtonClick);
-		if ("magnetUnit" in $$props) $$invalidate(62, magnetUnit = $$new_props.magnetUnit);
-		if ("magnetOffset" in $$props) $$invalidate(63, magnetOffset = $$new_props.magnetOffset);
-		if ("columnUnit" in $$props) $$invalidate(2, columnUnit = $$new_props.columnUnit);
-		if ("columnOffset" in $$props) $$invalidate(3, columnOffset = $$new_props.columnOffset);
-		if ("ganttTableModules" in $$props) $$invalidate(5, ganttTableModules = $$new_props.ganttTableModules);
-		if ("ganttBodyModules" in $$props) $$invalidate(6, ganttBodyModules = $$new_props.ganttBodyModules);
-		if ("reflectOnParentRows" in $$props) $$invalidate(64, reflectOnParentRows = $$new_props.reflectOnParentRows);
-		if ("reflectOnChildRows" in $$props) $$invalidate(65, reflectOnChildRows = $$new_props.reflectOnChildRows);
-		if ("columnStrokeColor" in $$props) $$invalidate(7, columnStrokeColor = $$new_props.columnStrokeColor);
-		if ("columnStrokeWidth" in $$props) $$invalidate(8, columnStrokeWidth = $$new_props.columnStrokeWidth);
-		if ("columnCount" in $$props) $$invalidate(85, columnCount = $$new_props.columnCount);
-		if ("columns" in $$props) $$invalidate(13, columns = $$new_props.columns);
-		if ("__scrollTop" in $$props) $$invalidate(86, __scrollTop = $$new_props.__scrollTop);
-		if ("__scrollLeft" in $$props) __scrollLeft = $$new_props.__scrollLeft;
-		if ("zoomLevel" in $$props) zoomLevel = $$new_props.zoomLevel;
-		if ("zooming" in $$props) $$invalidate(14, zooming = $$new_props.zooming);
-		if ("filteredRows" in $$props) $$invalidate(89, filteredRows = $$new_props.filteredRows);
-		if ("rightScrollbarVisible" in $$props) $$invalidate(15, rightScrollbarVisible = $$new_props.rightScrollbarVisible);
-		if ("rowContainerHeight" in $$props) $$invalidate(16, rowContainerHeight = $$new_props.rowContainerHeight);
-		if ("startIndex" in $$props) $$invalidate(90, startIndex = $$new_props.startIndex);
-		if ("endIndex" in $$props) $$invalidate(91, endIndex = $$new_props.endIndex);
-		if ("paddingTop" in $$props) $$invalidate(17, paddingTop = $$new_props.paddingTop);
-		if ("paddingBottom" in $$props) $$invalidate(18, paddingBottom = $$new_props.paddingBottom);
-		if ("visibleRows" in $$props) $$invalidate(19, visibleRows = $$new_props.visibleRows);
-		if ("visibleTasks" in $$props) $$invalidate(20, visibleTasks = $$new_props.visibleTasks);
-		if ("disableTransition" in $$props) $$invalidate(21, disableTransition = $$new_props.disableTransition);
-	};
-
-	if ($$props && "$$inject" in $$props) {
-		$$self.$inject_state($$props.$$inject);
-	}
 
 	$$self.$$.update = () => {
 		if ($$self.$$.dirty[1] & /*rows*/ 262144 | $$self.$$.dirty[2] & /*mounted*/ 4194304) {
@@ -6619,15 +4693,15 @@ function instance$a($$self, $$props, $$invalidate) {
 	];
 }
 
-class Gantt extends SvelteComponentDev {
+class Gantt extends SvelteComponent {
 	constructor(options) {
-		super(options);
+		super();
 
 		init(
 			this,
 			options,
-			instance$a,
-			create_fragment$a,
+			instance$8,
+			create_fragment$8,
 			safe_not_equal,
 			{
 				rows: 49,
@@ -6680,419 +4754,95 @@ class Gantt extends SvelteComponentDev {
 			},
 			[-1, -1, -1, -1, -1]
 		);
-
-		dispatch_dev("SvelteRegisterComponent", {
-			component: this,
-			tagName: "Gantt",
-			options,
-			id: create_fragment$a.name
-		});
-
-		const { ctx } = this.$$;
-		const props = options.props || {};
-
-		if (/*rows*/ ctx[49] === undefined && !("rows" in props)) {
-			console_1$2.warn("<Gantt> was created without expected prop 'rows'");
-		}
-
-		if (/*from*/ ctx[54] === undefined && !("from" in props)) {
-			console_1$2.warn("<Gantt> was created without expected prop 'from'");
-		}
-
-		if (/*to*/ ctx[55] === undefined && !("to" in props)) {
-			console_1$2.warn("<Gantt> was created without expected prop 'to'");
-		}
-
-		if (/*columnStrokeColor*/ ctx[7] === undefined && !("columnStrokeColor" in props)) {
-			console_1$2.warn("<Gantt> was created without expected prop 'columnStrokeColor'");
-		}
-
-		if (/*columnStrokeWidth*/ ctx[8] === undefined && !("columnStrokeWidth" in props)) {
-			console_1$2.warn("<Gantt> was created without expected prop 'columnStrokeWidth'");
-		}
-	}
-
-	get rows() {
-		throw new Error("<Gantt>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set rows(value) {
-		throw new Error("<Gantt>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get tasks() {
-		throw new Error("<Gantt>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set tasks(value) {
-		throw new Error("<Gantt>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get timeRanges() {
-		throw new Error("<Gantt>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set timeRanges(value) {
-		throw new Error("<Gantt>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get rowPadding() {
-		throw new Error("<Gantt>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set rowPadding(value) {
-		throw new Error("<Gantt>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get rowHeight() {
-		throw new Error("<Gantt>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set rowHeight(value) {
-		throw new Error("<Gantt>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get from() {
-		throw new Error("<Gantt>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set from(value) {
-		throw new Error("<Gantt>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get to() {
-		throw new Error("<Gantt>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set to(value) {
-		throw new Error("<Gantt>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get minWidth() {
-		throw new Error("<Gantt>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set minWidth(value) {
-		throw new Error("<Gantt>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get fitWidth() {
-		throw new Error("<Gantt>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set fitWidth(value) {
-		throw new Error("<Gantt>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get classes() {
-		throw new Error("<Gantt>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set classes(value) {
-		throw new Error("<Gantt>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get headers() {
-		throw new Error("<Gantt>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set headers(value) {
-		throw new Error("<Gantt>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get zoomLevels() {
-		throw new Error("<Gantt>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set zoomLevels(value) {
-		throw new Error("<Gantt>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get taskContent() {
-		throw new Error("<Gantt>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set taskContent(value) {
-		throw new Error("<Gantt>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get tableWidth() {
-		throw new Error("<Gantt>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set tableWidth(value) {
-		throw new Error("<Gantt>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get resizeHandleWidth() {
-		throw new Error("<Gantt>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set resizeHandleWidth(value) {
-		throw new Error("<Gantt>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get onTaskButtonClick() {
-		throw new Error("<Gantt>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set onTaskButtonClick(value) {
-		throw new Error("<Gantt>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get magnetUnit() {
-		throw new Error("<Gantt>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set magnetUnit(value) {
-		throw new Error("<Gantt>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get magnetOffset() {
-		throw new Error("<Gantt>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set magnetOffset(value) {
-		throw new Error("<Gantt>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get columnUnit() {
-		throw new Error("<Gantt>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set columnUnit(value) {
-		throw new Error("<Gantt>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get columnOffset() {
-		throw new Error("<Gantt>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set columnOffset(value) {
-		throw new Error("<Gantt>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get ganttTableModules() {
-		throw new Error("<Gantt>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set ganttTableModules(value) {
-		throw new Error("<Gantt>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get ganttBodyModules() {
-		throw new Error("<Gantt>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set ganttBodyModules(value) {
-		throw new Error("<Gantt>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get reflectOnParentRows() {
-		throw new Error("<Gantt>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set reflectOnParentRows(value) {
-		throw new Error("<Gantt>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get reflectOnChildRows() {
-		throw new Error("<Gantt>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set reflectOnChildRows(value) {
-		throw new Error("<Gantt>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get columnStrokeColor() {
-		throw new Error("<Gantt>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set columnStrokeColor(value) {
-		throw new Error("<Gantt>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get columnStrokeWidth() {
-		throw new Error("<Gantt>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set columnStrokeWidth(value) {
-		throw new Error("<Gantt>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
 	}
 
 	get columnService() {
 		return this.$$.ctx[66];
 	}
 
-	set columnService(value) {
-		throw new Error("<Gantt>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
 	get api() {
 		return this.$$.ctx[67];
-	}
-
-	set api(value) {
-		throw new Error("<Gantt>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
 	}
 
 	get taskFactory() {
 		return this.$$.ctx[46];
 	}
 
-	set taskFactory(value) {
-		throw new Error("<Gantt>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
 	get rowFactory() {
 		return this.$$.ctx[47];
-	}
-
-	set rowFactory(value) {
-		throw new Error("<Gantt>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
 	}
 
 	get dndManager() {
 		return this.$$.ctx[68];
 	}
 
-	set dndManager(value) {
-		throw new Error("<Gantt>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
 	get timeRangeFactory() {
 		return this.$$.ctx[69];
-	}
-
-	set timeRangeFactory(value) {
-		throw new Error("<Gantt>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
 	}
 
 	get utils() {
 		return this.$$.ctx[48];
 	}
 
-	set utils(value) {
-		throw new Error("<Gantt>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
 	get refreshTimeRanges() {
 		return this.$$.ctx[70];
-	}
-
-	set refreshTimeRanges(value) {
-		throw new Error("<Gantt>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
 	}
 
 	get refreshTasks() {
 		return this.$$.ctx[71];
 	}
 
-	set refreshTasks(value) {
-		throw new Error("<Gantt>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
 	get getRowContainer() {
 		return this.$$.ctx[72];
-	}
-
-	set getRowContainer(value) {
-		throw new Error("<Gantt>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
 	}
 
 	get selectTask() {
 		return this.$$.ctx[73];
 	}
 
-	set selectTask(value) {
-		throw new Error("<Gantt>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
 	get unselectTasks() {
 		return this.$$.ctx[74];
-	}
-
-	set unselectTasks(value) {
-		throw new Error("<Gantt>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
 	}
 
 	get scrollToRow() {
 		return this.$$.ctx[75];
 	}
 
-	set scrollToRow(value) {
-		throw new Error("<Gantt>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
 	get scrollToTask() {
 		return this.$$.ctx[76];
-	}
-
-	set scrollToTask(value) {
-		throw new Error("<Gantt>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
 	}
 
 	get updateTask() {
 		return this.$$.ctx[77];
 	}
 
-	set updateTask(value) {
-		throw new Error("<Gantt>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
 	get updateTasks() {
 		return this.$$.ctx[78];
-	}
-
-	set updateTasks(value) {
-		throw new Error("<Gantt>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
 	}
 
 	get updateRow() {
 		return this.$$.ctx[79];
 	}
 
-	set updateRow(value) {
-		throw new Error("<Gantt>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
 	get updateRows() {
 		return this.$$.ctx[80];
-	}
-
-	set updateRows(value) {
-		throw new Error("<Gantt>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
 	}
 
 	get getRow() {
 		return this.$$.ctx[81];
 	}
 
-	set getRow(value) {
-		throw new Error("<Gantt>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
 	get getTask() {
 		return this.$$.ctx[82];
-	}
-
-	set getTask(value) {
-		throw new Error("<Gantt>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
 	}
 
 	get getTasks() {
 		return this.$$.ctx[83];
 	}
-
-	set getTasks(value) {
-		throw new Error("<Gantt>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
 }
 
-/* src\modules\table\TableTreeCell.svelte generated by Svelte v3.23.0 */
-const file$a = "src\\modules\\table\\TableTreeCell.svelte";
+/* src/modules/table/TableTreeCell.svelte generated by Svelte v3.23.0 */
 
-// (18:4) {#if row.children}
 function create_if_block$2(ctx) {
 	let div;
 	let mounted;
@@ -7106,23 +4856,22 @@ function create_if_block$2(ctx) {
 	let current_block_type = select_block_type(ctx);
 	let if_block = current_block_type(ctx);
 
-	const block = {
-		c: function create() {
+	return {
+		c() {
 			div = element("div");
 			if_block.c();
-			attr_dev(div, "class", "sg-tree-expander svelte-1tpezbv");
-			add_location(div, file$a, 18, 8, 462);
+			attr(div, "class", "sg-tree-expander svelte-1tk4vqn");
 		},
-		m: function mount(target, anchor) {
-			insert_dev(target, div, anchor);
+		m(target, anchor) {
+			insert(target, div, anchor);
 			if_block.m(div, null);
 
 			if (!mounted) {
-				dispose = listen_dev(div, "click", /*onExpandToggle*/ ctx[1], false, false, false);
+				dispose = listen(div, "click", /*onExpandToggle*/ ctx[1]);
 				mounted = true;
 			}
 		},
-		p: function update(ctx, dirty) {
+		p(ctx, dirty) {
 			if (current_block_type !== (current_block_type = select_block_type(ctx))) {
 				if_block.d(1);
 				if_block = current_block_type(ctx);
@@ -7133,84 +4882,52 @@ function create_if_block$2(ctx) {
 				}
 			}
 		},
-		d: function destroy(detaching) {
-			if (detaching) detach_dev(div);
+		d(detaching) {
+			if (detaching) detach(div);
 			if_block.d();
 			mounted = false;
 			dispose();
 		}
 	};
-
-	dispatch_dev("SvelteRegisterBlock", {
-		block,
-		id: create_if_block$2.name,
-		type: "if",
-		source: "(18:4) {#if row.children}",
-		ctx
-	});
-
-	return block;
 }
 
 // (22:12) {:else}
 function create_else_block$1(ctx) {
 	let i;
 
-	const block = {
-		c: function create() {
+	return {
+		c() {
 			i = element("i");
-			attr_dev(i, "class", "fas fa-angle-right");
-			add_location(i, file$a, 22, 12, 634);
+			attr(i, "class", "fas fa-angle-right");
 		},
-		m: function mount(target, anchor) {
-			insert_dev(target, i, anchor);
+		m(target, anchor) {
+			insert(target, i, anchor);
 		},
-		d: function destroy(detaching) {
-			if (detaching) detach_dev(i);
+		d(detaching) {
+			if (detaching) detach(i);
 		}
 	};
-
-	dispatch_dev("SvelteRegisterBlock", {
-		block,
-		id: create_else_block$1.name,
-		type: "else",
-		source: "(22:12) {:else}",
-		ctx
-	});
-
-	return block;
 }
 
 // (20:12) {#if row.expanded}
 function create_if_block_1$1(ctx) {
 	let i;
 
-	const block = {
-		c: function create() {
+	return {
+		c() {
 			i = element("i");
-			attr_dev(i, "class", "fas fa-angle-down");
-			add_location(i, file$a, 20, 12, 566);
+			attr(i, "class", "fas fa-angle-down");
 		},
-		m: function mount(target, anchor) {
-			insert_dev(target, i, anchor);
+		m(target, anchor) {
+			insert(target, i, anchor);
 		},
-		d: function destroy(detaching) {
-			if (detaching) detach_dev(i);
+		d(detaching) {
+			if (detaching) detach(i);
 		}
 	};
-
-	dispatch_dev("SvelteRegisterBlock", {
-		block,
-		id: create_if_block_1$1.name,
-		type: "if",
-		source: "(20:12) {#if row.expanded}",
-		ctx
-	});
-
-	return block;
 }
 
-function create_fragment$b(ctx) {
+function create_fragment$9(ctx) {
 	let div;
 	let t;
 	let current;
@@ -7218,23 +4935,19 @@ function create_fragment$b(ctx) {
 	const default_slot_template = /*$$slots*/ ctx[4].default;
 	const default_slot = create_slot(default_slot_template, ctx, /*$$scope*/ ctx[3], null);
 
-	const block = {
-		c: function create() {
+	return {
+		c() {
 			div = element("div");
 			if (if_block) if_block.c();
 			t = space();
 			if (default_slot) default_slot.c();
-			attr_dev(div, "class", "sg-cell-inner svelte-1tpezbv");
+			attr(div, "class", "sg-cell-inner svelte-1tk4vqn");
 			set_style(div, "padding-left", /*row*/ ctx[0].childLevel * 3 + "em");
-			add_location(div, file$a, 16, 0, 358);
 		},
-		l: function claim(nodes) {
-			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
-		},
-		m: function mount(target, anchor) {
-			insert_dev(target, div, anchor);
+		m(target, anchor) {
+			insert(target, div, anchor);
 			if (if_block) if_block.m(div, null);
-			append_dev(div, t);
+			append(div, t);
 
 			if (default_slot) {
 				default_slot.m(div, null);
@@ -7242,7 +4955,7 @@ function create_fragment$b(ctx) {
 
 			current = true;
 		},
-		p: function update(ctx, [dirty]) {
+		p(ctx, [dirty]) {
 			if (/*row*/ ctx[0].children) {
 				if (if_block) {
 					if_block.p(ctx, dirty);
@@ -7266,34 +4979,24 @@ function create_fragment$b(ctx) {
 				set_style(div, "padding-left", /*row*/ ctx[0].childLevel * 3 + "em");
 			}
 		},
-		i: function intro(local) {
+		i(local) {
 			if (current) return;
 			transition_in(default_slot, local);
 			current = true;
 		},
-		o: function outro(local) {
+		o(local) {
 			transition_out(default_slot, local);
 			current = false;
 		},
-		d: function destroy(detaching) {
-			if (detaching) detach_dev(div);
+		d(detaching) {
+			if (detaching) detach(div);
 			if (if_block) if_block.d();
 			if (default_slot) default_slot.d(detaching);
 		}
 	};
-
-	dispatch_dev("SvelteRegisterBlock", {
-		block,
-		id: create_fragment$b.name,
-		type: "component",
-		source: "",
-		ctx
-	});
-
-	return block;
 }
 
-function instance$b($$self, $$props, $$invalidate) {
+function instance$9($$self, $$props, $$invalidate) {
 	let { row } = $$props;
 	const dispatch = createEventDispatcher();
 
@@ -7305,70 +5008,24 @@ function instance$b($$self, $$props, $$invalidate) {
 		}
 	}
 
-	const writable_props = ["row"];
-
-	Object.keys($$props).forEach(key => {
-		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console.warn(`<TableTreeCell> was created with unknown prop '${key}'`);
-	});
-
 	let { $$slots = {}, $$scope } = $$props;
-	validate_slots("TableTreeCell", $$slots, ['default']);
 
 	$$self.$set = $$props => {
 		if ("row" in $$props) $$invalidate(0, row = $$props.row);
 		if ("$$scope" in $$props) $$invalidate(3, $$scope = $$props.$$scope);
 	};
 
-	$$self.$capture_state = () => ({
-		createEventDispatcher,
-		getContext,
-		row,
-		dispatch,
-		onExpandToggle
-	});
-
-	$$self.$inject_state = $$props => {
-		if ("row" in $$props) $$invalidate(0, row = $$props.row);
-	};
-
-	if ($$props && "$$inject" in $$props) {
-		$$self.$inject_state($$props.$$inject);
-	}
-
 	return [row, onExpandToggle, dispatch, $$scope, $$slots];
 }
 
-class TableTreeCell extends SvelteComponentDev {
+class TableTreeCell extends SvelteComponent {
 	constructor(options) {
-		super(options);
-		init(this, options, instance$b, create_fragment$b, safe_not_equal, { row: 0 });
-
-		dispatch_dev("SvelteRegisterComponent", {
-			component: this,
-			tagName: "TableTreeCell",
-			options,
-			id: create_fragment$b.name
-		});
-
-		const { ctx } = this.$$;
-		const props = options.props || {};
-
-		if (/*row*/ ctx[0] === undefined && !("row" in props)) {
-			console.warn("<TableTreeCell> was created without expected prop 'row'");
-		}
-	}
-
-	get row() {
-		throw new Error("<TableTreeCell>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set row(value) {
-		throw new Error("<TableTreeCell>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+		super();
+		init(this, options, instance$9, create_fragment$9, safe_not_equal, { row: 0 });
 	}
 }
 
-/* src\modules\table\TableRow.svelte generated by Svelte v3.23.0 */
-const file$b = "src\\modules\\table\\TableRow.svelte";
+/* src/modules/table/TableRow.svelte generated by Svelte v3.23.0 */
 
 function get_each_context$3(ctx, list, i) {
 	const child_ctx = ctx.slice();
@@ -7392,20 +5049,20 @@ function create_else_block_1(ctx) {
 	let current_block_type = select_block_type_2(ctx);
 	let if_block1 = current_block_type(ctx);
 
-	const block = {
-		c: function create() {
+	return {
+		c() {
 			if (if_block0) if_block0.c();
 			t = space();
 			if_block1.c();
 			if_block1_anchor = empty();
 		},
-		m: function mount(target, anchor) {
+		m(target, anchor) {
 			if (if_block0) if_block0.m(target, anchor);
-			insert_dev(target, t, anchor);
+			insert(target, t, anchor);
 			if_block1.m(target, anchor);
-			insert_dev(target, if_block1_anchor, anchor);
+			insert(target, if_block1_anchor, anchor);
 		},
-		p: function update(ctx, dirty) {
+		p(ctx, dirty) {
 			if (/*row*/ ctx[1].model.iconClass) {
 				if (if_block0) {
 					if_block0.p(ctx, dirty);
@@ -7433,23 +5090,13 @@ function create_else_block_1(ctx) {
 		},
 		i: noop,
 		o: noop,
-		d: function destroy(detaching) {
+		d(detaching) {
 			if (if_block0) if_block0.d(detaching);
-			if (detaching) detach_dev(t);
+			if (detaching) detach(t);
 			if_block1.d(detaching);
-			if (detaching) detach_dev(if_block1_anchor);
+			if (detaching) detach(if_block1_anchor);
 		}
 	};
-
-	dispatch_dev("SvelteRegisterBlock", {
-		block,
-		id: create_else_block_1.name,
-		type: "else",
-		source: "(40:12) {:else}",
-		ctx
-	});
-
-	return block;
 }
 
 // (24:12) {#if header.type == 'tree'}
@@ -7461,22 +5108,21 @@ function create_if_block$3(ctx) {
 				row: /*row*/ ctx[1],
 				$$slots: { default: [create_default_slot] },
 				$$scope: { ctx }
-			},
-			$$inline: true
+			}
 		});
 
 	tabletreecell.$on("rowCollapsed", /*rowCollapsed_handler*/ ctx[10]);
 	tabletreecell.$on("rowExpanded", /*rowExpanded_handler*/ ctx[11]);
 
-	const block = {
-		c: function create() {
+	return {
+		c() {
 			create_component(tabletreecell.$$.fragment);
 		},
-		m: function mount(target, anchor) {
+		m(target, anchor) {
 			mount_component(tabletreecell, target, anchor);
 			current = true;
 		},
-		p: function update(ctx, dirty) {
+		p(ctx, dirty) {
 			const tabletreecell_changes = {};
 			if (dirty & /*row*/ 2) tabletreecell_changes.row = /*row*/ ctx[1];
 
@@ -7486,29 +5132,19 @@ function create_if_block$3(ctx) {
 
 			tabletreecell.$set(tabletreecell_changes);
 		},
-		i: function intro(local) {
+		i(local) {
 			if (current) return;
 			transition_in(tabletreecell.$$.fragment, local);
 			current = true;
 		},
-		o: function outro(local) {
+		o(local) {
 			transition_out(tabletreecell.$$.fragment, local);
 			current = false;
 		},
-		d: function destroy(detaching) {
+		d(detaching) {
 			destroy_component(tabletreecell, detaching);
 		}
 	};
-
-	dispatch_dev("SvelteRegisterBlock", {
-		block,
-		id: create_if_block$3.name,
-		type: "if",
-		source: "(24:12) {#if header.type == 'tree'}",
-		ctx
-	});
-
-	return block;
 }
 
 // (41:16) {#if row.model.iconClass}
@@ -7517,38 +5153,26 @@ function create_if_block_7(ctx) {
 	let i;
 	let i_class_value;
 
-	const block = {
-		c: function create() {
+	return {
+		c() {
 			div = element("div");
 			i = element("i");
-			attr_dev(i, "class", i_class_value = "" + (null_to_empty(/*row*/ ctx[1].model.iconClass) + " svelte-1d4m2ui"));
-			add_location(i, file$b, 42, 20, 1681);
-			attr_dev(div, "class", "sg-table-icon svelte-1d4m2ui");
-			add_location(div, file$b, 41, 16, 1632);
+			attr(i, "class", i_class_value = "" + (null_to_empty(/*row*/ ctx[1].model.iconClass) + " svelte-ffcwbe"));
+			attr(div, "class", "sg-table-icon svelte-ffcwbe");
 		},
-		m: function mount(target, anchor) {
-			insert_dev(target, div, anchor);
-			append_dev(div, i);
+		m(target, anchor) {
+			insert(target, div, anchor);
+			append(div, i);
 		},
-		p: function update(ctx, dirty) {
-			if (dirty & /*row*/ 2 && i_class_value !== (i_class_value = "" + (null_to_empty(/*row*/ ctx[1].model.iconClass) + " svelte-1d4m2ui"))) {
-				attr_dev(i, "class", i_class_value);
+		p(ctx, dirty) {
+			if (dirty & /*row*/ 2 && i_class_value !== (i_class_value = "" + (null_to_empty(/*row*/ ctx[1].model.iconClass) + " svelte-ffcwbe"))) {
+				attr(i, "class", i_class_value);
 			}
 		},
-		d: function destroy(detaching) {
-			if (detaching) detach_dev(div);
+		d(detaching) {
+			if (detaching) detach(div);
 		}
 	};
-
-	dispatch_dev("SvelteRegisterBlock", {
-		block,
-		id: create_if_block_7.name,
-		type: "if",
-		source: "(41:16) {#if row.model.iconClass}",
-		ctx
-	});
-
-	return block;
 }
 
 // (56:16) {:else}
@@ -7556,30 +5180,20 @@ function create_else_block_2(ctx) {
 	let t_value = /*row*/ ctx[1].model[/*header*/ ctx[12].property] + "";
 	let t;
 
-	const block = {
-		c: function create() {
+	return {
+		c() {
 			t = text(t_value);
 		},
-		m: function mount(target, anchor) {
-			insert_dev(target, t, anchor);
+		m(target, anchor) {
+			insert(target, t, anchor);
 		},
-		p: function update(ctx, dirty) {
-			if (dirty & /*row, headers*/ 3 && t_value !== (t_value = /*row*/ ctx[1].model[/*header*/ ctx[12].property] + "")) set_data_dev(t, t_value);
+		p(ctx, dirty) {
+			if (dirty & /*row, headers*/ 3 && t_value !== (t_value = /*row*/ ctx[1].model[/*header*/ ctx[12].property] + "")) set_data(t, t_value);
 		},
-		d: function destroy(detaching) {
-			if (detaching) detach_dev(t);
+		d(detaching) {
+			if (detaching) detach(t);
 		}
 	};
-
-	dispatch_dev("SvelteRegisterBlock", {
-		block,
-		id: create_else_block_2.name,
-		type: "else",
-		source: "(56:16) {:else}",
-		ctx
-	});
-
-	return block;
 }
 
 // (51:57) 
@@ -7591,48 +5205,36 @@ function create_if_block_6(ctx) {
 	let t1_value = /*row*/ ctx[1].model[/*header*/ ctx[12].property] + "";
 	let t1;
 
-	const block = {
-		c: function create() {
+	return {
+		c() {
 			img = element("img");
 			t0 = space();
 			div = element("div");
 			t1 = text(t1_value);
-			attr_dev(img, "class", "sg-resource-image svelte-1d4m2ui");
-			if (img.src !== (img_src_value = /*row*/ ctx[1].model.imageSrc)) attr_dev(img, "src", img_src_value);
-			attr_dev(img, "alt", "");
-			add_location(img, file$b, 51, 20, 2036);
-			attr_dev(div, "class", "sg-resource-title");
-			add_location(div, file$b, 52, 20, 2124);
+			attr(img, "class", "sg-resource-image svelte-ffcwbe");
+			if (img.src !== (img_src_value = /*row*/ ctx[1].model.imageSrc)) attr(img, "src", img_src_value);
+			attr(img, "alt", "");
+			attr(div, "class", "sg-resource-title");
 		},
-		m: function mount(target, anchor) {
-			insert_dev(target, img, anchor);
-			insert_dev(target, t0, anchor);
-			insert_dev(target, div, anchor);
-			append_dev(div, t1);
+		m(target, anchor) {
+			insert(target, img, anchor);
+			insert(target, t0, anchor);
+			insert(target, div, anchor);
+			append(div, t1);
 		},
-		p: function update(ctx, dirty) {
+		p(ctx, dirty) {
 			if (dirty & /*row*/ 2 && img.src !== (img_src_value = /*row*/ ctx[1].model.imageSrc)) {
-				attr_dev(img, "src", img_src_value);
+				attr(img, "src", img_src_value);
 			}
 
-			if (dirty & /*row, headers*/ 3 && t1_value !== (t1_value = /*row*/ ctx[1].model[/*header*/ ctx[12].property] + "")) set_data_dev(t1, t1_value);
+			if (dirty & /*row, headers*/ 3 && t1_value !== (t1_value = /*row*/ ctx[1].model[/*header*/ ctx[12].property] + "")) set_data(t1, t1_value);
 		},
-		d: function destroy(detaching) {
-			if (detaching) detach_dev(img);
-			if (detaching) detach_dev(t0);
-			if (detaching) detach_dev(div);
+		d(detaching) {
+			if (detaching) detach(img);
+			if (detaching) detach(t0);
+			if (detaching) detach(div);
 		}
 	};
-
-	dispatch_dev("SvelteRegisterBlock", {
-		block,
-		id: create_if_block_6.name,
-		type: "if",
-		source: "(51:57) ",
-		ctx
-	});
-
-	return block;
 }
 
 // (49:42) 
@@ -7640,30 +5242,20 @@ function create_if_block_5(ctx) {
 	let html_tag;
 	let raw_value = /*header*/ ctx[12].renderer(/*row*/ ctx[1]) + "";
 
-	const block = {
-		c: function create() {
+	return {
+		c() {
 			html_tag = new HtmlTag(null);
 		},
-		m: function mount(target, anchor) {
+		m(target, anchor) {
 			html_tag.m(raw_value, target, anchor);
 		},
-		p: function update(ctx, dirty) {
+		p(ctx, dirty) {
 			if (dirty & /*headers, row*/ 3 && raw_value !== (raw_value = /*header*/ ctx[12].renderer(/*row*/ ctx[1]) + "")) html_tag.p(raw_value);
 		},
-		d: function destroy(detaching) {
+		d(detaching) {
 			if (detaching) html_tag.d();
 		}
 	};
-
-	dispatch_dev("SvelteRegisterBlock", {
-		block,
-		id: create_if_block_5.name,
-		type: "if",
-		source: "(49:42) ",
-		ctx
-	});
-
-	return block;
 }
 
 // (47:16) {#if row.model.headerHtml}
@@ -7671,30 +5263,20 @@ function create_if_block_4$1(ctx) {
 	let html_tag;
 	let raw_value = /*row*/ ctx[1].model.headerHtml + "";
 
-	const block = {
-		c: function create() {
+	return {
+		c() {
 			html_tag = new HtmlTag(null);
 		},
-		m: function mount(target, anchor) {
+		m(target, anchor) {
 			html_tag.m(raw_value, target, anchor);
 		},
-		p: function update(ctx, dirty) {
+		p(ctx, dirty) {
 			if (dirty & /*row*/ 2 && raw_value !== (raw_value = /*row*/ ctx[1].model.headerHtml + "")) html_tag.p(raw_value);
 		},
-		d: function destroy(detaching) {
+		d(detaching) {
 			if (detaching) html_tag.d();
 		}
 	};
-
-	dispatch_dev("SvelteRegisterBlock", {
-		block,
-		id: create_if_block_4$1.name,
-		type: "if",
-		source: "(47:16) {#if row.model.headerHtml}",
-		ctx
-	});
-
-	return block;
 }
 
 // (26:20) {#if row.model.iconClass}
@@ -7703,38 +5285,26 @@ function create_if_block_3$1(ctx) {
 	let i;
 	let i_class_value;
 
-	const block = {
-		c: function create() {
+	return {
+		c() {
 			div = element("div");
 			i = element("i");
-			attr_dev(i, "class", i_class_value = "" + (null_to_empty(/*row*/ ctx[1].model.iconClass) + " svelte-1d4m2ui"));
-			add_location(i, file$b, 27, 24, 1108);
-			attr_dev(div, "class", "sg-table-icon svelte-1d4m2ui");
-			add_location(div, file$b, 26, 20, 1055);
+			attr(i, "class", i_class_value = "" + (null_to_empty(/*row*/ ctx[1].model.iconClass) + " svelte-ffcwbe"));
+			attr(div, "class", "sg-table-icon svelte-ffcwbe");
 		},
-		m: function mount(target, anchor) {
-			insert_dev(target, div, anchor);
-			append_dev(div, i);
+		m(target, anchor) {
+			insert(target, div, anchor);
+			append(div, i);
 		},
-		p: function update(ctx, dirty) {
-			if (dirty & /*row*/ 2 && i_class_value !== (i_class_value = "" + (null_to_empty(/*row*/ ctx[1].model.iconClass) + " svelte-1d4m2ui"))) {
-				attr_dev(i, "class", i_class_value);
+		p(ctx, dirty) {
+			if (dirty & /*row*/ 2 && i_class_value !== (i_class_value = "" + (null_to_empty(/*row*/ ctx[1].model.iconClass) + " svelte-ffcwbe"))) {
+				attr(i, "class", i_class_value);
 			}
 		},
-		d: function destroy(detaching) {
-			if (detaching) detach_dev(div);
+		d(detaching) {
+			if (detaching) detach(div);
 		}
 	};
-
-	dispatch_dev("SvelteRegisterBlock", {
-		block,
-		id: create_if_block_3$1.name,
-		type: "if",
-		source: "(26:20) {#if row.model.iconClass}",
-		ctx
-	});
-
-	return block;
 }
 
 // (36:20) {:else}
@@ -7742,30 +5312,20 @@ function create_else_block$2(ctx) {
 	let t_value = /*row*/ ctx[1].model[/*header*/ ctx[12].property] + "";
 	let t;
 
-	const block = {
-		c: function create() {
+	return {
+		c() {
 			t = text(t_value);
 		},
-		m: function mount(target, anchor) {
-			insert_dev(target, t, anchor);
+		m(target, anchor) {
+			insert(target, t, anchor);
 		},
-		p: function update(ctx, dirty) {
-			if (dirty & /*row, headers*/ 3 && t_value !== (t_value = /*row*/ ctx[1].model[/*header*/ ctx[12].property] + "")) set_data_dev(t, t_value);
+		p(ctx, dirty) {
+			if (dirty & /*row, headers*/ 3 && t_value !== (t_value = /*row*/ ctx[1].model[/*header*/ ctx[12].property] + "")) set_data(t, t_value);
 		},
-		d: function destroy(detaching) {
-			if (detaching) detach_dev(t);
+		d(detaching) {
+			if (detaching) detach(t);
 		}
 	};
-
-	dispatch_dev("SvelteRegisterBlock", {
-		block,
-		id: create_else_block$2.name,
-		type: "else",
-		source: "(36:20) {:else}",
-		ctx
-	});
-
-	return block;
 }
 
 // (34:46) 
@@ -7773,30 +5333,20 @@ function create_if_block_2$1(ctx) {
 	let html_tag;
 	let raw_value = /*header*/ ctx[12].renderer(/*row*/ ctx[1]) + "";
 
-	const block = {
-		c: function create() {
+	return {
+		c() {
 			html_tag = new HtmlTag(null);
 		},
-		m: function mount(target, anchor) {
+		m(target, anchor) {
 			html_tag.m(raw_value, target, anchor);
 		},
-		p: function update(ctx, dirty) {
+		p(ctx, dirty) {
 			if (dirty & /*headers, row*/ 3 && raw_value !== (raw_value = /*header*/ ctx[12].renderer(/*row*/ ctx[1]) + "")) html_tag.p(raw_value);
 		},
-		d: function destroy(detaching) {
+		d(detaching) {
 			if (detaching) html_tag.d();
 		}
 	};
-
-	dispatch_dev("SvelteRegisterBlock", {
-		block,
-		id: create_if_block_2$1.name,
-		type: "if",
-		source: "(34:46) ",
-		ctx
-	});
-
-	return block;
 }
 
 // (32:20) {#if row.model.headerHtml}
@@ -7804,30 +5354,20 @@ function create_if_block_1$2(ctx) {
 	let html_tag;
 	let raw_value = /*row*/ ctx[1].model.headerHtml + "";
 
-	const block = {
-		c: function create() {
+	return {
+		c() {
 			html_tag = new HtmlTag(null);
 		},
-		m: function mount(target, anchor) {
+		m(target, anchor) {
 			html_tag.m(raw_value, target, anchor);
 		},
-		p: function update(ctx, dirty) {
+		p(ctx, dirty) {
 			if (dirty & /*row*/ 2 && raw_value !== (raw_value = /*row*/ ctx[1].model.headerHtml + "")) html_tag.p(raw_value);
 		},
-		d: function destroy(detaching) {
+		d(detaching) {
 			if (detaching) html_tag.d();
 		}
 	};
-
-	dispatch_dev("SvelteRegisterBlock", {
-		block,
-		id: create_if_block_1$2.name,
-		type: "if",
-		source: "(32:20) {#if row.model.headerHtml}",
-		ctx
-	});
-
-	return block;
 }
 
 // (25:16) <TableTreeCell on:rowCollapsed on:rowExpanded {row}>
@@ -7845,20 +5385,20 @@ function create_default_slot(ctx) {
 	let current_block_type = select_block_type_1(ctx);
 	let if_block1 = current_block_type(ctx);
 
-	const block = {
-		c: function create() {
+	return {
+		c() {
 			if (if_block0) if_block0.c();
 			t = space();
 			if_block1.c();
 			if_block1_anchor = empty();
 		},
-		m: function mount(target, anchor) {
+		m(target, anchor) {
 			if (if_block0) if_block0.m(target, anchor);
-			insert_dev(target, t, anchor);
+			insert(target, t, anchor);
 			if_block1.m(target, anchor);
-			insert_dev(target, if_block1_anchor, anchor);
+			insert(target, if_block1_anchor, anchor);
 		},
-		p: function update(ctx, dirty) {
+		p(ctx, dirty) {
 			if (/*row*/ ctx[1].model.iconClass) {
 				if (if_block0) {
 					if_block0.p(ctx, dirty);
@@ -7884,23 +5424,13 @@ function create_default_slot(ctx) {
 				}
 			}
 		},
-		d: function destroy(detaching) {
+		d(detaching) {
 			if (if_block0) if_block0.d(detaching);
-			if (detaching) detach_dev(t);
+			if (detaching) detach(t);
 			if_block1.d(detaching);
-			if (detaching) detach_dev(if_block1_anchor);
+			if (detaching) detach(if_block1_anchor);
 		}
 	};
-
-	dispatch_dev("SvelteRegisterBlock", {
-		block,
-		id: create_default_slot.name,
-		type: "slot",
-		source: "(25:16) <TableTreeCell on:rowCollapsed on:rowExpanded {row}>",
-		ctx
-	});
-
-	return block;
 }
 
 // (22:4) {#each headers as header}
@@ -7921,22 +5451,21 @@ function create_each_block$3(ctx) {
 	current_block_type_index = select_block_type(ctx);
 	if_block = if_blocks[current_block_type_index] = if_block_creators[current_block_type_index](ctx);
 
-	const block = {
-		c: function create() {
+	return {
+		c() {
 			div = element("div");
 			if_block.c();
 			t = space();
-			attr_dev(div, "class", "sg-table-body-cell sg-table-cell svelte-1d4m2ui");
+			attr(div, "class", "sg-table-body-cell sg-table-cell svelte-ffcwbe");
 			set_style(div, "width", /*header*/ ctx[12].width + "px");
-			add_location(div, file$b, 22, 8, 798);
 		},
-		m: function mount(target, anchor) {
-			insert_dev(target, div, anchor);
+		m(target, anchor) {
+			insert(target, div, anchor);
 			if_blocks[current_block_type_index].m(div, null);
-			append_dev(div, t);
+			append(div, t);
 			current = true;
 		},
-		p: function update(ctx, dirty) {
+		p(ctx, dirty) {
 			let previous_block_index = current_block_type_index;
 			current_block_type_index = select_block_type(ctx);
 
@@ -7965,39 +5494,28 @@ function create_each_block$3(ctx) {
 				set_style(div, "width", /*header*/ ctx[12].width + "px");
 			}
 		},
-		i: function intro(local) {
+		i(local) {
 			if (current) return;
 			transition_in(if_block);
 			current = true;
 		},
-		o: function outro(local) {
+		o(local) {
 			transition_out(if_block);
 			current = false;
 		},
-		d: function destroy(detaching) {
-			if (detaching) detach_dev(div);
+		d(detaching) {
+			if (detaching) detach(div);
 			if_blocks[current_block_type_index].d();
 		}
 	};
-
-	dispatch_dev("SvelteRegisterBlock", {
-		block,
-		id: create_each_block$3.name,
-		type: "each",
-		source: "(22:4) {#each headers as header}",
-		ctx
-	});
-
-	return block;
 }
 
-function create_fragment$c(ctx) {
+function create_fragment$a(ctx) {
 	let div;
 	let div_class_value;
 	let div_data_row_id_value;
 	let current;
 	let each_value = /*headers*/ ctx[0];
-	validate_each_argument(each_value);
 	let each_blocks = [];
 
 	for (let i = 0; i < each_value.length; i += 1) {
@@ -8008,27 +5526,23 @@ function create_fragment$c(ctx) {
 		each_blocks[i] = null;
 	});
 
-	const block = {
-		c: function create() {
+	return {
+		c() {
 			div = element("div");
 
 			for (let i = 0; i < each_blocks.length; i += 1) {
 				each_blocks[i].c();
 			}
 
-			attr_dev(div, "class", div_class_value = "sg-table-row " + (/*row*/ ctx[1].model.class || "") + " svelte-1d4m2ui");
+			attr(div, "class", div_class_value = "sg-table-row " + (/*row*/ ctx[1].model.class || "") + " svelte-ffcwbe");
 			set_style(div, "height", /*$rowHeight*/ ctx[2] + "px");
-			attr_dev(div, "data-row-id", div_data_row_id_value = /*row*/ ctx[1].model.id);
+			attr(div, "data-row-id", div_data_row_id_value = /*row*/ ctx[1].model.id);
 			toggle_class(div, "sg-row-expanded", /*row*/ ctx[1].expanded);
 			toggle_class(div, "sg-hover", /*$hoveredRow*/ ctx[3] == /*row*/ ctx[1].model.id);
 			toggle_class(div, "sg-selected", /*$selectedRow*/ ctx[4] == /*row*/ ctx[1].model.id);
-			add_location(div, file$b, 20, 0, 517);
 		},
-		l: function claim(nodes) {
-			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
-		},
-		m: function mount(target, anchor) {
-			insert_dev(target, div, anchor);
+		m(target, anchor) {
+			insert(target, div, anchor);
 
 			for (let i = 0; i < each_blocks.length; i += 1) {
 				each_blocks[i].m(div, null);
@@ -8036,10 +5550,9 @@ function create_fragment$c(ctx) {
 
 			current = true;
 		},
-		p: function update(ctx, [dirty]) {
+		p(ctx, [dirty]) {
 			if (dirty & /*headers, row*/ 3) {
 				each_value = /*headers*/ ctx[0];
-				validate_each_argument(each_value);
 				let i;
 
 				for (i = 0; i < each_value.length; i += 1) {
@@ -8065,8 +5578,8 @@ function create_fragment$c(ctx) {
 				check_outros();
 			}
 
-			if (!current || dirty & /*row*/ 2 && div_class_value !== (div_class_value = "sg-table-row " + (/*row*/ ctx[1].model.class || "") + " svelte-1d4m2ui")) {
-				attr_dev(div, "class", div_class_value);
+			if (!current || dirty & /*row*/ 2 && div_class_value !== (div_class_value = "sg-table-row " + (/*row*/ ctx[1].model.class || "") + " svelte-ffcwbe")) {
+				attr(div, "class", div_class_value);
 			}
 
 			if (!current || dirty & /*$rowHeight*/ 4) {
@@ -8074,7 +5587,7 @@ function create_fragment$c(ctx) {
 			}
 
 			if (!current || dirty & /*row*/ 2 && div_data_row_id_value !== (div_data_row_id_value = /*row*/ ctx[1].model.id)) {
-				attr_dev(div, "data-row-id", div_data_row_id_value);
+				attr(div, "data-row-id", div_data_row_id_value);
 			}
 
 			if (dirty & /*row, row*/ 2) {
@@ -8089,7 +5602,7 @@ function create_fragment$c(ctx) {
 				toggle_class(div, "sg-selected", /*$selectedRow*/ ctx[4] == /*row*/ ctx[1].model.id);
 			}
 		},
-		i: function intro(local) {
+		i(local) {
 			if (current) return;
 
 			for (let i = 0; i < each_value.length; i += 1) {
@@ -8098,7 +5611,7 @@ function create_fragment$c(ctx) {
 
 			current = true;
 		},
-		o: function outro(local) {
+		o(local) {
 			each_blocks = each_blocks.filter(Boolean);
 
 			for (let i = 0; i < each_blocks.length; i += 1) {
@@ -8107,47 +5620,26 @@ function create_fragment$c(ctx) {
 
 			current = false;
 		},
-		d: function destroy(detaching) {
-			if (detaching) detach_dev(div);
+		d(detaching) {
+			if (detaching) detach(div);
 			destroy_each(each_blocks, detaching);
 		}
 	};
-
-	dispatch_dev("SvelteRegisterBlock", {
-		block,
-		id: create_fragment$c.name,
-		type: "component",
-		source: "",
-		ctx
-	});
-
-	return block;
 }
 
-function instance$c($$self, $$props, $$invalidate) {
+function instance$a($$self, $$props, $$invalidate) {
 	let $rowHeight;
 	let $hoveredRow;
 	let $selectedRow;
 	let { headers = null } = $$props;
 	let { row = null } = $$props;
 	const { rowHeight } = getContext("options");
-	validate_store(rowHeight, "rowHeight");
 	component_subscribe($$self, rowHeight, value => $$invalidate(2, $rowHeight = value));
 	const { hoveredRow, selectedRow } = getContext("gantt");
-	validate_store(hoveredRow, "hoveredRow");
 	component_subscribe($$self, hoveredRow, value => $$invalidate(3, $hoveredRow = value));
-	validate_store(selectedRow, "selectedRow");
 	component_subscribe($$self, selectedRow, value => $$invalidate(4, $selectedRow = value));
 	const dispatch = createEventDispatcher();
 	let treeIndentationStyle = "";
-	const writable_props = ["headers", "row"];
-
-	Object.keys($$props).forEach(key => {
-		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console.warn(`<TableRow> was created with unknown prop '${key}'`);
-	});
-
-	let { $$slots = {}, $$scope } = $$props;
-	validate_slots("TableRow", $$slots, []);
 
 	function rowCollapsed_handler(event) {
 		bubble($$self, event);
@@ -8161,32 +5653,6 @@ function instance$c($$self, $$props, $$invalidate) {
 		if ("headers" in $$props) $$invalidate(0, headers = $$props.headers);
 		if ("row" in $$props) $$invalidate(1, row = $$props.row);
 	};
-
-	$$self.$capture_state = () => ({
-		createEventDispatcher,
-		getContext,
-		TableTreeCell,
-		headers,
-		row,
-		rowHeight,
-		hoveredRow,
-		selectedRow,
-		dispatch,
-		treeIndentationStyle,
-		$rowHeight,
-		$hoveredRow,
-		$selectedRow
-	});
-
-	$$self.$inject_state = $$props => {
-		if ("headers" in $$props) $$invalidate(0, headers = $$props.headers);
-		if ("row" in $$props) $$invalidate(1, row = $$props.row);
-		if ("treeIndentationStyle" in $$props) treeIndentationStyle = $$props.treeIndentationStyle;
-	};
-
-	if ($$props && "$$inject" in $$props) {
-		$$self.$inject_state($$props.$$inject);
-	}
 
 	$$self.$$.update = () => {
 		if ($$self.$$.dirty & /*row*/ 2) {
@@ -8214,93 +5680,58 @@ function instance$c($$self, $$props, $$invalidate) {
 	];
 }
 
-class TableRow extends SvelteComponentDev {
+class TableRow extends SvelteComponent {
 	constructor(options) {
-		super(options);
-		init(this, options, instance$c, create_fragment$c, safe_not_equal, { headers: 0, row: 1 });
-
-		dispatch_dev("SvelteRegisterComponent", {
-			component: this,
-			tagName: "TableRow",
-			options,
-			id: create_fragment$c.name
-		});
-	}
-
-	get headers() {
-		throw new Error("<TableRow>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set headers(value) {
-		throw new Error("<TableRow>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get row() {
-		throw new Error("<TableRow>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set row(value) {
-		throw new Error("<TableRow>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+		super();
+		init(this, options, instance$a, create_fragment$a, safe_not_equal, { headers: 0, row: 1 });
 	}
 }
 
-/* src\modules\table\Table.svelte generated by Svelte v3.23.0 */
-const file$c = "src\\modules\\table\\Table.svelte";
+/* src/modules/table/Table.svelte generated by Svelte v3.23.0 */
 
 function get_each_context$4(ctx, list, i) {
 	const child_ctx = ctx.slice();
-	child_ctx[28] = list[i];
+	child_ctx[30] = list[i];
 	return child_ctx;
 }
 
 function get_each_context_1$1(ctx, list, i) {
 	const child_ctx = ctx.slice();
-	child_ctx[31] = list[i];
+	child_ctx[33] = list[i];
 	return child_ctx;
 }
 
 // (115:8) {#each tableHeaders as header}
 function create_each_block_1$1(ctx) {
 	let div;
-	let t0_value = /*header*/ ctx[31].title + "";
+	let t0_value = /*header*/ ctx[33].title + "";
 	let t0;
 	let t1;
 
-	const block = {
-		c: function create() {
+	return {
+		c() {
 			div = element("div");
 			t0 = text(t0_value);
 			t1 = space();
-			attr_dev(div, "class", "sg-table-header-cell sg-table-cell svelte-iysj96");
-			set_style(div, "width", /*header*/ ctx[31].width + "px");
-			add_location(div, file$c, 115, 12, 3429);
+			attr(div, "class", "sg-table-header-cell sg-table-cell svelte-87uanl");
+			set_style(div, "width", /*header*/ ctx[33].width + "px");
 		},
-		m: function mount(target, anchor) {
-			insert_dev(target, div, anchor);
-			append_dev(div, t0);
-			append_dev(div, t1);
+		m(target, anchor) {
+			insert(target, div, anchor);
+			append(div, t0);
+			append(div, t1);
 		},
-		p: function update(ctx, dirty) {
-			if (dirty[0] & /*tableHeaders*/ 32 && t0_value !== (t0_value = /*header*/ ctx[31].title + "")) set_data_dev(t0, t0_value);
+		p(ctx, dirty) {
+			if (dirty[0] & /*tableHeaders*/ 32 && t0_value !== (t0_value = /*header*/ ctx[33].title + "")) set_data(t0, t0_value);
 
 			if (dirty[0] & /*tableHeaders*/ 32) {
-				set_style(div, "width", /*header*/ ctx[31].width + "px");
+				set_style(div, "width", /*header*/ ctx[33].width + "px");
 			}
 		},
-		d: function destroy(detaching) {
-			if (detaching) detach_dev(div);
+		d(detaching) {
+			if (detaching) detach(div);
 		}
 	};
-
-	dispatch_dev("SvelteRegisterBlock", {
-		block,
-		id: create_each_block_1$1.name,
-		type: "each",
-		source: "(115:8) {#each tableHeaders as header}",
-		ctx
-	});
-
-	return block;
 }
 
 // (125:16) {#each visibleRows as row}
@@ -8309,55 +5740,44 @@ function create_each_block$4(ctx) {
 
 	const tablerow = new TableRow({
 			props: {
-				row: /*row*/ ctx[28],
+				row: /*row*/ ctx[30],
 				headers: /*tableHeaders*/ ctx[5]
-			},
-			$$inline: true
+			}
 		});
 
-	tablerow.$on("rowExpanded", /*onRowExpanded*/ ctx[14]);
-	tablerow.$on("rowCollapsed", /*onRowCollapsed*/ ctx[15]);
+	tablerow.$on("rowExpanded", /*onRowExpanded*/ ctx[15]);
+	tablerow.$on("rowCollapsed", /*onRowCollapsed*/ ctx[16]);
 
-	const block = {
-		c: function create() {
+	return {
+		c() {
 			create_component(tablerow.$$.fragment);
 		},
-		m: function mount(target, anchor) {
+		m(target, anchor) {
 			mount_component(tablerow, target, anchor);
 			current = true;
 		},
-		p: function update(ctx, dirty) {
+		p(ctx, dirty) {
 			const tablerow_changes = {};
-			if (dirty[0] & /*visibleRows*/ 16) tablerow_changes.row = /*row*/ ctx[28];
+			if (dirty[0] & /*visibleRows*/ 16) tablerow_changes.row = /*row*/ ctx[30];
 			if (dirty[0] & /*tableHeaders*/ 32) tablerow_changes.headers = /*tableHeaders*/ ctx[5];
 			tablerow.$set(tablerow_changes);
 		},
-		i: function intro(local) {
+		i(local) {
 			if (current) return;
 			transition_in(tablerow.$$.fragment, local);
 			current = true;
 		},
-		o: function outro(local) {
+		o(local) {
 			transition_out(tablerow.$$.fragment, local);
 			current = false;
 		},
-		d: function destroy(detaching) {
+		d(detaching) {
 			destroy_component(tablerow, detaching);
 		}
 	};
-
-	dispatch_dev("SvelteRegisterBlock", {
-		block,
-		id: create_each_block$4.name,
-		type: "each",
-		source: "(125:16) {#each visibleRows as row}",
-		ctx
-	});
-
-	return block;
 }
 
-function create_fragment$d(ctx) {
+function create_fragment$b(ctx) {
 	let div4;
 	let div0;
 	let t;
@@ -8368,7 +5788,6 @@ function create_fragment$d(ctx) {
 	let mounted;
 	let dispose;
 	let each_value_1 = /*tableHeaders*/ ctx[5];
-	validate_each_argument(each_value_1);
 	let each_blocks_1 = [];
 
 	for (let i = 0; i < each_value_1.length; i += 1) {
@@ -8376,7 +5795,6 @@ function create_fragment$d(ctx) {
 	}
 
 	let each_value = /*visibleRows*/ ctx[4];
-	validate_each_argument(each_value);
 	let each_blocks = [];
 
 	for (let i = 0; i < each_value.length; i += 1) {
@@ -8387,8 +5805,8 @@ function create_fragment$d(ctx) {
 		each_blocks[i] = null;
 	});
 
-	const block = {
-		c: function create() {
+	return {
+		c() {
 			div4 = element("div");
 			div0 = element("div");
 
@@ -8405,39 +5823,31 @@ function create_fragment$d(ctx) {
 				each_blocks[i].c();
 			}
 
-			attr_dev(div0, "class", "sg-table-header svelte-iysj96");
+			attr(div0, "class", "sg-table-header svelte-87uanl");
 			set_style(div0, "height", /*$headerHeight*/ ctx[8] + "px");
-			add_location(div0, file$c, 113, 4, 3285);
-			attr_dev(div1, "class", "sg-table-rows svelte-iysj96");
+			attr(div1, "class", "sg-table-rows svelte-87uanl");
 			set_style(div1, "padding-top", /*paddingTop*/ ctx[1] + "px");
 			set_style(div1, "padding-bottom", /*paddingBottom*/ ctx[2] + "px");
 			set_style(div1, "height", /*rowContainerHeight*/ ctx[3] + "px");
-			add_location(div1, file$c, 123, 12, 3756);
-			attr_dev(div2, "class", "sg-table-scroller svelte-iysj96");
-			add_location(div2, file$c, 122, 8, 3692);
-			attr_dev(div3, "class", "sg-table-body svelte-iysj96");
+			attr(div2, "class", "sg-table-scroller svelte-87uanl");
+			attr(div3, "class", "sg-table-body svelte-87uanl");
 			toggle_class(div3, "bottom-scrollbar-visible", /*bottomScrollbarVisible*/ ctx[7]);
-			add_location(div3, file$c, 121, 4, 3597);
-			attr_dev(div4, "class", "sg-table sg-view svelte-iysj96");
+			attr(div4, "class", "sg-table sg-view svelte-87uanl");
 			set_style(div4, "width", /*tableWidth*/ ctx[0] + "px");
-			add_location(div4, file$c, 112, 0, 3219);
 		},
-		l: function claim(nodes) {
-			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
-		},
-		m: function mount(target, anchor) {
-			insert_dev(target, div4, anchor);
-			append_dev(div4, div0);
+		m(target, anchor) {
+			insert(target, div4, anchor);
+			append(div4, div0);
 
 			for (let i = 0; i < each_blocks_1.length; i += 1) {
 				each_blocks_1[i].m(div0, null);
 			}
 
-			/*div0_binding*/ ctx[27](div0);
-			append_dev(div4, t);
-			append_dev(div4, div3);
-			append_dev(div3, div2);
-			append_dev(div2, div1);
+			/*div0_binding*/ ctx[29](div0);
+			append(div4, t);
+			append(div4, div3);
+			append(div3, div2);
+			append(div2, div1);
 
 			for (let i = 0; i < each_blocks.length; i += 1) {
 				each_blocks[i].m(div1, null);
@@ -8446,14 +5856,13 @@ function create_fragment$d(ctx) {
 			current = true;
 
 			if (!mounted) {
-				dispose = action_destroyer(ctx[13].call(null, div2));
+				dispose = action_destroyer(ctx[14].call(null, div2));
 				mounted = true;
 			}
 		},
-		p: function update(ctx, dirty) {
+		p(ctx, dirty) {
 			if (dirty[0] & /*tableHeaders*/ 32) {
 				each_value_1 = /*tableHeaders*/ ctx[5];
-				validate_each_argument(each_value_1);
 				let i;
 
 				for (i = 0; i < each_value_1.length; i += 1) {
@@ -8479,9 +5888,8 @@ function create_fragment$d(ctx) {
 				set_style(div0, "height", /*$headerHeight*/ ctx[8] + "px");
 			}
 
-			if (dirty[0] & /*visibleRows, tableHeaders, onRowExpanded, onRowCollapsed*/ 49200) {
+			if (dirty[0] & /*visibleRows, tableHeaders, onRowExpanded, onRowCollapsed*/ 98352) {
 				each_value = /*visibleRows*/ ctx[4];
-				validate_each_argument(each_value);
 				let i;
 
 				for (i = 0; i < each_value.length; i += 1) {
@@ -8527,7 +5935,7 @@ function create_fragment$d(ctx) {
 				set_style(div4, "width", /*tableWidth*/ ctx[0] + "px");
 			}
 		},
-		i: function intro(local) {
+		i(local) {
 			if (current) return;
 
 			for (let i = 0; i < each_value.length; i += 1) {
@@ -8536,7 +5944,7 @@ function create_fragment$d(ctx) {
 
 			current = true;
 		},
-		o: function outro(local) {
+		o(local) {
 			each_blocks = each_blocks.filter(Boolean);
 
 			for (let i = 0; i < each_blocks.length; i += 1) {
@@ -8545,28 +5953,16 @@ function create_fragment$d(ctx) {
 
 			current = false;
 		},
-		d: function destroy(detaching) {
-			if (detaching) detach_dev(div4);
+		d(detaching) {
+			if (detaching) detach(div4);
 			destroy_each(each_blocks_1, detaching);
-			/*div0_binding*/ ctx[27](null);
+			/*div0_binding*/ ctx[29](null);
 			destroy_each(each_blocks, detaching);
 			mounted = false;
 			dispose();
 		}
 	};
-
-	dispatch_dev("SvelteRegisterBlock", {
-		block,
-		id: create_fragment$d.name,
-		type: "component",
-		source: "",
-		ctx
-	});
-
-	return block;
 }
-
-const type = "table";
 
 function hide(children) {
 	children.forEach(row => {
@@ -8582,17 +5978,16 @@ function show(children, hidden = false) {
 	});
 }
 
-function instance$d($$self, $$props, $$invalidate) {
+function instance$b($$self, $$props, $$invalidate) {
 	let $rowStore;
+	let $rowHeight;
 	let $taskStore;
 	let $rowPadding;
 	let $width;
 	let $visibleWidth;
 	let $headerHeight;
-	validate_store(rowStore, "rowStore");
-	component_subscribe($$self, rowStore, $$value => $$invalidate(17, $rowStore = $$value));
-	validate_store(taskStore, "taskStore");
-	component_subscribe($$self, taskStore, $$value => $$invalidate(18, $taskStore = $$value));
+	component_subscribe($$self, rowStore, $$value => $$invalidate(18, $rowStore = $$value));
+	component_subscribe($$self, taskStore, $$value => $$invalidate(20, $taskStore = $$value));
 	const dispatch = createEventDispatcher();
 	let { tableWidth } = $$props;
 	let { paddingTop } = $$props;
@@ -8609,15 +6004,12 @@ function instance$d($$self, $$props, $$invalidate) {
 	] } = $$props;
 
 	const { from, to, width, visibleWidth, headerHeight } = getContext("dimensions");
-	validate_store(width, "width");
-	component_subscribe($$self, width, value => $$invalidate(20, $width = value));
-	validate_store(visibleWidth, "visibleWidth");
-	component_subscribe($$self, visibleWidth, value => $$invalidate(21, $visibleWidth = value));
-	validate_store(headerHeight, "headerHeight");
+	component_subscribe($$self, width, value => $$invalidate(22, $width = value));
+	component_subscribe($$self, visibleWidth, value => $$invalidate(23, $visibleWidth = value));
 	component_subscribe($$self, headerHeight, value => $$invalidate(8, $headerHeight = value));
-	const { rowPadding } = getContext("options");
-	validate_store(rowPadding, "rowPadding");
-	component_subscribe($$self, rowPadding, value => $$invalidate(19, $rowPadding = value));
+	const { rowPadding, rowHeight } = getContext("options");
+	component_subscribe($$self, rowPadding, value => $$invalidate(21, $rowPadding = value));
+	component_subscribe($$self, rowHeight, value => $$invalidate(19, $rowHeight = value));
 
 	onMount(() => {
 		dispatch("init", { module: this });
@@ -8664,7 +6056,7 @@ function instance$d($$self, $$props, $$invalidate) {
 
 			if (!row.hidden) {
 				set_store_value(rowStore, $rowStore.entities[id].y = y, $rowStore);
-				y += 52;
+				y += $rowHeight;
 			}
 		});
 
@@ -8677,22 +6069,6 @@ function instance$d($$self, $$props, $$invalidate) {
 
 	// if gantt displays a bottom scrollbar and table does not, we need to pad out the table
 	let bottomScrollbarVisible;
-
-	const writable_props = [
-		"tableWidth",
-		"paddingTop",
-		"paddingBottom",
-		"rowContainerHeight",
-		"visibleRows",
-		"tableHeaders"
-	];
-
-	Object.keys($$props).forEach(key => {
-		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console.warn(`<Table> was created with unknown prop '${key}'`);
-	});
-
-	let { $$slots = {}, $$scope } = $$props;
-	validate_slots("Table", $$slots, []);
 
 	function div0_binding($$value) {
 		binding_callbacks[$$value ? "unshift" : "push"](() => {
@@ -8709,62 +6085,6 @@ function instance$d($$self, $$props, $$invalidate) {
 		if ("tableHeaders" in $$props) $$invalidate(5, tableHeaders = $$props.tableHeaders);
 	};
 
-	$$self.$capture_state = () => ({
-		type,
-		createEventDispatcher,
-		onMount,
-		getContext,
-		dispatch,
-		TableRow,
-		H_SCROLLBAR_WIDTH,
-		rowStore,
-		taskStore,
-		tableWidth,
-		paddingTop,
-		paddingBottom,
-		rowContainerHeight,
-		visibleRows,
-		tableHeaders,
-		from,
-		to,
-		width,
-		visibleWidth,
-		headerHeight,
-		rowPadding,
-		scrollables,
-		headerContainer,
-		scrollListener,
-		scrollWidth,
-		onRowExpanded,
-		onRowCollapsed,
-		updateYPositions,
-		hide,
-		show,
-		bottomScrollbarVisible,
-		$rowStore,
-		$taskStore,
-		$rowPadding,
-		$width,
-		$visibleWidth,
-		$headerHeight
-	});
-
-	$$self.$inject_state = $$props => {
-		if ("tableWidth" in $$props) $$invalidate(0, tableWidth = $$props.tableWidth);
-		if ("paddingTop" in $$props) $$invalidate(1, paddingTop = $$props.paddingTop);
-		if ("paddingBottom" in $$props) $$invalidate(2, paddingBottom = $$props.paddingBottom);
-		if ("rowContainerHeight" in $$props) $$invalidate(3, rowContainerHeight = $$props.rowContainerHeight);
-		if ("visibleRows" in $$props) $$invalidate(4, visibleRows = $$props.visibleRows);
-		if ("tableHeaders" in $$props) $$invalidate(5, tableHeaders = $$props.tableHeaders);
-		if ("headerContainer" in $$props) $$invalidate(6, headerContainer = $$props.headerContainer);
-		if ("scrollWidth" in $$props) $$invalidate(16, scrollWidth = $$props.scrollWidth);
-		if ("bottomScrollbarVisible" in $$props) $$invalidate(7, bottomScrollbarVisible = $$props.bottomScrollbarVisible);
-	};
-
-	if ($$props && "$$inject" in $$props) {
-		$$self.$inject_state($$props.$$inject);
-	}
-
 	$$self.$$.update = () => {
 		if ($$self.$$.dirty[0] & /*tableHeaders*/ 32) {
 			 {
@@ -8774,11 +6094,11 @@ function instance$d($$self, $$props, $$invalidate) {
 					sum += header.width;
 				});
 
-				$$invalidate(16, scrollWidth = sum);
+				$$invalidate(17, scrollWidth = sum);
 			}
 		}
 
-		if ($$self.$$.dirty[0] & /*$width, $visibleWidth, scrollWidth, tableWidth*/ 3211265) {
+		if ($$self.$$.dirty[0] & /*$width, $visibleWidth, scrollWidth, tableWidth*/ 12713985) {
 			 {
 				$$invalidate(7, bottomScrollbarVisible = $width > $visibleWidth && scrollWidth <= tableWidth);
 			}
@@ -8799,11 +6119,13 @@ function instance$d($$self, $$props, $$invalidate) {
 		visibleWidth,
 		headerHeight,
 		rowPadding,
+		rowHeight,
 		scrollListener,
 		onRowExpanded,
 		onRowCollapsed,
 		scrollWidth,
 		$rowStore,
+		$rowHeight,
 		$taskStore,
 		$rowPadding,
 		$width,
@@ -8817,15 +6139,15 @@ function instance$d($$self, $$props, $$invalidate) {
 	];
 }
 
-class Table extends SvelteComponentDev {
+class Table extends SvelteComponent {
 	constructor(options) {
-		super(options);
+		super();
 
 		init(
 			this,
 			options,
-			instance$d,
-			create_fragment$d,
+			instance$b,
+			create_fragment$b,
 			safe_not_equal,
 			{
 				tableWidth: 0,
@@ -8837,166 +6159,71 @@ class Table extends SvelteComponentDev {
 			},
 			[-1, -1]
 		);
-
-		dispatch_dev("SvelteRegisterComponent", {
-			component: this,
-			tagName: "Table",
-			options,
-			id: create_fragment$d.name
-		});
-
-		const { ctx } = this.$$;
-		const props = options.props || {};
-
-		if (/*tableWidth*/ ctx[0] === undefined && !("tableWidth" in props)) {
-			console.warn("<Table> was created without expected prop 'tableWidth'");
-		}
-
-		if (/*paddingTop*/ ctx[1] === undefined && !("paddingTop" in props)) {
-			console.warn("<Table> was created without expected prop 'paddingTop'");
-		}
-
-		if (/*paddingBottom*/ ctx[2] === undefined && !("paddingBottom" in props)) {
-			console.warn("<Table> was created without expected prop 'paddingBottom'");
-		}
-
-		if (/*rowContainerHeight*/ ctx[3] === undefined && !("rowContainerHeight" in props)) {
-			console.warn("<Table> was created without expected prop 'rowContainerHeight'");
-		}
-
-		if (/*visibleRows*/ ctx[4] === undefined && !("visibleRows" in props)) {
-			console.warn("<Table> was created without expected prop 'visibleRows'");
-		}
-	}
-
-	get tableWidth() {
-		throw new Error("<Table>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set tableWidth(value) {
-		throw new Error("<Table>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get paddingTop() {
-		throw new Error("<Table>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set paddingTop(value) {
-		throw new Error("<Table>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get paddingBottom() {
-		throw new Error("<Table>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set paddingBottom(value) {
-		throw new Error("<Table>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get rowContainerHeight() {
-		throw new Error("<Table>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set rowContainerHeight(value) {
-		throw new Error("<Table>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get visibleRows() {
-		throw new Error("<Table>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set visibleRows(value) {
-		throw new Error("<Table>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get tableHeaders() {
-		throw new Error("<Table>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set tableHeaders(value) {
-		throw new Error("<Table>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
 	}
 }
 
 var SvelteGanttTable = Table;
 
-/* src\modules\dependencies\Arrow.svelte generated by Svelte v3.23.0 */
-const file$d = "src\\modules\\dependencies\\Arrow.svelte";
+/* src/modules/dependencies/Arrow.svelte generated by Svelte v3.23.0 */
 
-function create_fragment$e(ctx) {
+function create_fragment$c(ctx) {
 	let svg;
 	let path0;
 	let path1;
 
-	const block = {
-		c: function create() {
+	return {
+		c() {
 			svg = svg_element("svg");
 			path0 = svg_element("path");
 			path1 = svg_element("path");
-			attr_dev(path0, "d", /*path*/ ctx[2]);
-			attr_dev(path0, "stroke", /*stroke*/ ctx[0]);
-			attr_dev(path0, "stroke-width", /*strokeWidth*/ ctx[1]);
-			attr_dev(path0, "fill", "transparent");
-			attr_dev(path0, "class", "select-area svelte-5u2c1l");
-			add_location(path0, file$d, 53, 4, 1507);
-			attr_dev(path1, "d", /*arrowPath*/ ctx[3]);
-			attr_dev(path1, "fill", /*stroke*/ ctx[0]);
-			add_location(path1, file$d, 54, 4, 1609);
-			attr_dev(svg, "xmlns", "http://www.w3.org/2000/svg");
-			attr_dev(svg, "shape-rendering", "crispEdges");
-			attr_dev(svg, "class", "arrow svelte-5u2c1l");
-			attr_dev(svg, "height", "100%");
-			attr_dev(svg, "width", "100%");
-			add_location(svg, file$d, 52, 0, 1391);
+			attr(path0, "d", /*path*/ ctx[2]);
+			attr(path0, "stroke", /*stroke*/ ctx[0]);
+			attr(path0, "stroke-width", /*strokeWidth*/ ctx[1]);
+			attr(path0, "fill", "transparent");
+			attr(path0, "class", "select-area svelte-1uk268y");
+			attr(path1, "d", /*arrowPath*/ ctx[3]);
+			attr(path1, "fill", /*stroke*/ ctx[0]);
+			attr(svg, "xmlns", "http://www.w3.org/2000/svg");
+			attr(svg, "shape-rendering", "crispEdges");
+			attr(svg, "class", "arrow svelte-1uk268y");
+			attr(svg, "height", "100%");
+			attr(svg, "width", "100%");
 		},
-		l: function claim(nodes) {
-			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
+		m(target, anchor) {
+			insert(target, svg, anchor);
+			append(svg, path0);
+			append(svg, path1);
 		},
-		m: function mount(target, anchor) {
-			insert_dev(target, svg, anchor);
-			append_dev(svg, path0);
-			append_dev(svg, path1);
-		},
-		p: function update(ctx, [dirty]) {
+		p(ctx, [dirty]) {
 			if (dirty & /*path*/ 4) {
-				attr_dev(path0, "d", /*path*/ ctx[2]);
+				attr(path0, "d", /*path*/ ctx[2]);
 			}
 
 			if (dirty & /*stroke*/ 1) {
-				attr_dev(path0, "stroke", /*stroke*/ ctx[0]);
+				attr(path0, "stroke", /*stroke*/ ctx[0]);
 			}
 
 			if (dirty & /*strokeWidth*/ 2) {
-				attr_dev(path0, "stroke-width", /*strokeWidth*/ ctx[1]);
+				attr(path0, "stroke-width", /*strokeWidth*/ ctx[1]);
 			}
 
 			if (dirty & /*arrowPath*/ 8) {
-				attr_dev(path1, "d", /*arrowPath*/ ctx[3]);
+				attr(path1, "d", /*arrowPath*/ ctx[3]);
 			}
 
 			if (dirty & /*stroke*/ 1) {
-				attr_dev(path1, "fill", /*stroke*/ ctx[0]);
+				attr(path1, "fill", /*stroke*/ ctx[0]);
 			}
 		},
 		i: noop,
 		o: noop,
-		d: function destroy(detaching) {
-			if (detaching) detach_dev(svg);
+		d(detaching) {
+			if (detaching) detach(svg);
 		}
 	};
-
-	dispatch_dev("SvelteRegisterBlock", {
-		block,
-		id: create_fragment$e.name,
-		type: "component",
-		source: "",
-		ctx
-	});
-
-	return block;
 }
 
-function instance$e($$self, $$props, $$invalidate) {
+function instance$c($$self, $$props, $$invalidate) {
 	let { startY } = $$props;
 	let { endY } = $$props;
 	let { endX } = $$props;
@@ -9015,24 +6242,6 @@ function instance$e($$self, $$props, $$invalidate) {
 	let path;
 	let arrowPath;
 
-	const writable_props = [
-		"startY",
-		"endY",
-		"endX",
-		"startX",
-		"minLen",
-		"arrowSize",
-		"stroke",
-		"strokeWidth"
-	];
-
-	Object.keys($$props).forEach(key => {
-		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console.warn(`<Arrow> was created with unknown prop '${key}'`);
-	});
-
-	let { $$slots = {}, $$scope } = $$props;
-	validate_slots("Arrow", $$slots, []);
-
 	$$self.$set = $$props => {
 		if ("startY" in $$props) $$invalidate(4, startY = $$props.startY);
 		if ("endY" in $$props) $$invalidate(5, endY = $$props.endY);
@@ -9043,41 +6252,6 @@ function instance$e($$self, $$props, $$invalidate) {
 		if ("stroke" in $$props) $$invalidate(0, stroke = $$props.stroke);
 		if ("strokeWidth" in $$props) $$invalidate(1, strokeWidth = $$props.strokeWidth);
 	};
-
-	$$self.$capture_state = () => ({
-		onMount,
-		startY,
-		endY,
-		endX,
-		startX,
-		minLen,
-		arrowSize,
-		stroke,
-		strokeWidth,
-		height,
-		width,
-		path,
-		arrowPath
-	});
-
-	$$self.$inject_state = $$props => {
-		if ("startY" in $$props) $$invalidate(4, startY = $$props.startY);
-		if ("endY" in $$props) $$invalidate(5, endY = $$props.endY);
-		if ("endX" in $$props) $$invalidate(6, endX = $$props.endX);
-		if ("startX" in $$props) $$invalidate(7, startX = $$props.startX);
-		if ("minLen" in $$props) $$invalidate(8, minLen = $$props.minLen);
-		if ("arrowSize" in $$props) $$invalidate(9, arrowSize = $$props.arrowSize);
-		if ("stroke" in $$props) $$invalidate(0, stroke = $$props.stroke);
-		if ("strokeWidth" in $$props) $$invalidate(1, strokeWidth = $$props.strokeWidth);
-		if ("height" in $$props) $$invalidate(10, height = $$props.height);
-		if ("width" in $$props) $$invalidate(11, width = $$props.width);
-		if ("path" in $$props) $$invalidate(2, path = $$props.path);
-		if ("arrowPath" in $$props) $$invalidate(3, arrowPath = $$props.arrowPath);
-	};
-
-	if ($$props && "$$inject" in $$props) {
-		$$self.$inject_state($$props.$$inject);
-	}
 
 	$$self.$$.update = () => {
 		if ($$self.$$.dirty & /*endY, startY*/ 48) {
@@ -9130,11 +6304,11 @@ function instance$e($$self, $$props, $$invalidate) {
 	];
 }
 
-class Arrow extends SvelteComponentDev {
+class Arrow extends SvelteComponent {
 	constructor(options) {
-		super(options);
+		super();
 
-		init(this, options, instance$e, create_fragment$e, safe_not_equal, {
+		init(this, options, instance$c, create_fragment$c, safe_not_equal, {
 			startY: 4,
 			endY: 5,
 			endX: 6,
@@ -9144,103 +6318,12 @@ class Arrow extends SvelteComponentDev {
 			stroke: 0,
 			strokeWidth: 1
 		});
-
-		dispatch_dev("SvelteRegisterComponent", {
-			component: this,
-			tagName: "Arrow",
-			options,
-			id: create_fragment$e.name
-		});
-
-		const { ctx } = this.$$;
-		const props = options.props || {};
-
-		if (/*startY*/ ctx[4] === undefined && !("startY" in props)) {
-			console.warn("<Arrow> was created without expected prop 'startY'");
-		}
-
-		if (/*endY*/ ctx[5] === undefined && !("endY" in props)) {
-			console.warn("<Arrow> was created without expected prop 'endY'");
-		}
-
-		if (/*endX*/ ctx[6] === undefined && !("endX" in props)) {
-			console.warn("<Arrow> was created without expected prop 'endX'");
-		}
-
-		if (/*startX*/ ctx[7] === undefined && !("startX" in props)) {
-			console.warn("<Arrow> was created without expected prop 'startX'");
-		}
-	}
-
-	get startY() {
-		throw new Error("<Arrow>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set startY(value) {
-		throw new Error("<Arrow>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get endY() {
-		throw new Error("<Arrow>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set endY(value) {
-		throw new Error("<Arrow>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get endX() {
-		throw new Error("<Arrow>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set endX(value) {
-		throw new Error("<Arrow>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get startX() {
-		throw new Error("<Arrow>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set startX(value) {
-		throw new Error("<Arrow>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get minLen() {
-		throw new Error("<Arrow>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set minLen(value) {
-		throw new Error("<Arrow>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get arrowSize() {
-		throw new Error("<Arrow>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set arrowSize(value) {
-		throw new Error("<Arrow>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get stroke() {
-		throw new Error("<Arrow>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set stroke(value) {
-		throw new Error("<Arrow>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get strokeWidth() {
-		throw new Error("<Arrow>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set strokeWidth(value) {
-		throw new Error("<Arrow>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
 	}
 }
 
-/* src\modules\dependencies\Dependency.svelte generated by Svelte v3.23.0 */
-const file$e = "src\\modules\\dependencies\\Dependency.svelte";
+/* src/modules/dependencies/Dependency.svelte generated by Svelte v3.23.0 */
 
-function create_fragment$f(ctx) {
+function create_fragment$d(ctx) {
 	let div;
 	let current;
 
@@ -9250,29 +6333,24 @@ function create_fragment$f(ctx) {
 				startY: /*fromTask*/ ctx[1].top + /*fromTask*/ ctx[1].height / 2,
 				endX: /*toTask*/ ctx[2].left,
 				endY: /*toTask*/ ctx[2].top + /*toTask*/ ctx[2].height / 2
-			},
-			$$inline: true
+			}
 		});
 
-	const block = {
-		c: function create() {
+	return {
+		c() {
 			div = element("div");
 			create_component(arrow.$$.fragment);
-			attr_dev(div, "class", "sg-dependency svelte-fnf1gz");
+			attr(div, "class", "sg-dependency svelte-741ycn");
 			set_style(div, "left", "0");
 			set_style(div, "top", "0");
-			attr_dev(div, "data-dependency-id", /*id*/ ctx[0]);
-			add_location(div, file$e, 16, 0, 317);
+			attr(div, "data-dependency-id", /*id*/ ctx[0]);
 		},
-		l: function claim(nodes) {
-			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
-		},
-		m: function mount(target, anchor) {
-			insert_dev(target, div, anchor);
+		m(target, anchor) {
+			insert(target, div, anchor);
 			mount_component(arrow, div, null);
 			current = true;
 		},
-		p: function update(ctx, [dirty]) {
+		p(ctx, [dirty]) {
 			const arrow_changes = {};
 			if (dirty & /*fromTask*/ 2) arrow_changes.startX = /*fromTask*/ ctx[1].left + /*fromTask*/ ctx[1].width;
 			if (dirty & /*fromTask*/ 2) arrow_changes.startY = /*fromTask*/ ctx[1].top + /*fromTask*/ ctx[1].height / 2;
@@ -9281,81 +6359,39 @@ function create_fragment$f(ctx) {
 			arrow.$set(arrow_changes);
 
 			if (!current || dirty & /*id*/ 1) {
-				attr_dev(div, "data-dependency-id", /*id*/ ctx[0]);
+				attr(div, "data-dependency-id", /*id*/ ctx[0]);
 			}
 		},
-		i: function intro(local) {
+		i(local) {
 			if (current) return;
 			transition_in(arrow.$$.fragment, local);
 			current = true;
 		},
-		o: function outro(local) {
+		o(local) {
 			transition_out(arrow.$$.fragment, local);
 			current = false;
 		},
-		d: function destroy(detaching) {
-			if (detaching) detach_dev(div);
+		d(detaching) {
+			if (detaching) detach(div);
 			destroy_component(arrow);
 		}
 	};
-
-	dispatch_dev("SvelteRegisterBlock", {
-		block,
-		id: create_fragment$f.name,
-		type: "component",
-		source: "",
-		ctx
-	});
-
-	return block;
 }
 
-function instance$f($$self, $$props, $$invalidate) {
+function instance$d($$self, $$props, $$invalidate) {
 	let $taskStore;
-	validate_store(taskStore, "taskStore");
 	component_subscribe($$self, taskStore, $$value => $$invalidate(5, $taskStore = $$value));
 	let { id } = $$props;
 	let { fromId } = $$props;
 	let { toId } = $$props;
 	let fromTask;
 	let toTask;
-	const writable_props = ["id", "fromId", "toId"];
-
-	Object.keys($$props).forEach(key => {
-		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console.warn(`<Dependency> was created with unknown prop '${key}'`);
-	});
-
-	let { $$slots = {}, $$scope } = $$props;
-	validate_slots("Dependency", $$slots, []);
 
 	$$self.$set = $$props => {
 		if ("id" in $$props) $$invalidate(0, id = $$props.id);
 		if ("fromId" in $$props) $$invalidate(3, fromId = $$props.fromId);
 		if ("toId" in $$props) $$invalidate(4, toId = $$props.toId);
 	};
-
-	$$self.$capture_state = () => ({
-		Arrow,
-		taskStore,
-		id,
-		fromId,
-		toId,
-		fromTask,
-		toTask,
-		$taskStore
-	});
-
-	$$self.$inject_state = $$props => {
-		if ("id" in $$props) $$invalidate(0, id = $$props.id);
-		if ("fromId" in $$props) $$invalidate(3, fromId = $$props.fromId);
-		if ("toId" in $$props) $$invalidate(4, toId = $$props.toId);
-		if ("fromTask" in $$props) $$invalidate(1, fromTask = $$props.fromTask);
-		if ("toTask" in $$props) $$invalidate(2, toTask = $$props.toTask);
-	};
-
-	if ($$props && "$$inject" in $$props) {
-		$$self.$inject_state($$props.$$inject);
-	}
 
 	$$self.$$.update = () => {
 		if ($$self.$$.dirty & /*$taskStore, fromId*/ 40) {
@@ -9370,61 +6406,14 @@ function instance$f($$self, $$props, $$invalidate) {
 	return [id, fromTask, toTask, fromId, toId];
 }
 
-class Dependency extends SvelteComponentDev {
+class Dependency extends SvelteComponent {
 	constructor(options) {
-		super(options);
-		init(this, options, instance$f, create_fragment$f, safe_not_equal, { id: 0, fromId: 3, toId: 4 });
-
-		dispatch_dev("SvelteRegisterComponent", {
-			component: this,
-			tagName: "Dependency",
-			options,
-			id: create_fragment$f.name
-		});
-
-		const { ctx } = this.$$;
-		const props = options.props || {};
-
-		if (/*id*/ ctx[0] === undefined && !("id" in props)) {
-			console.warn("<Dependency> was created without expected prop 'id'");
-		}
-
-		if (/*fromId*/ ctx[3] === undefined && !("fromId" in props)) {
-			console.warn("<Dependency> was created without expected prop 'fromId'");
-		}
-
-		if (/*toId*/ ctx[4] === undefined && !("toId" in props)) {
-			console.warn("<Dependency> was created without expected prop 'toId'");
-		}
-	}
-
-	get id() {
-		throw new Error("<Dependency>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set id(value) {
-		throw new Error("<Dependency>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get fromId() {
-		throw new Error("<Dependency>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set fromId(value) {
-		throw new Error("<Dependency>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get toId() {
-		throw new Error("<Dependency>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set toId(value) {
-		throw new Error("<Dependency>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+		super();
+		init(this, options, instance$d, create_fragment$d, safe_not_equal, { id: 0, fromId: 3, toId: 4 });
 	}
 }
 
-/* src\modules\dependencies\GanttDependencies.svelte generated by Svelte v3.23.0 */
-const file$f = "src\\modules\\dependencies\\GanttDependencies.svelte";
+/* src/modules/dependencies/GanttDependencies.svelte generated by Svelte v3.23.0 */
 
 function get_each_context$5(ctx, list, i) {
 	const child_ctx = ctx.slice();
@@ -9443,63 +6432,51 @@ function create_each_block$5(key_1, ctx) {
 		dependency_props = assign(dependency_props, dependency_spread_levels[i]);
 	}
 
-	const dependency = new Dependency({ props: dependency_props, $$inline: true });
+	const dependency = new Dependency({ props: dependency_props });
 
-	const block = {
+	return {
 		key: key_1,
 		first: null,
-		c: function create() {
+		c() {
 			first = empty();
 			create_component(dependency.$$.fragment);
 			this.first = first;
 		},
-		m: function mount(target, anchor) {
-			insert_dev(target, first, anchor);
+		m(target, anchor) {
+			insert(target, first, anchor);
 			mount_component(dependency, target, anchor);
 			current = true;
 		},
-		p: function update(ctx, dirty) {
+		p(ctx, dirty) {
 			const dependency_changes = (dirty & /*visibleDependencies*/ 1)
 			? get_spread_update(dependency_spread_levels, [get_spread_object(/*dependency*/ ctx[6])])
 			: {};
 
 			dependency.$set(dependency_changes);
 		},
-		i: function intro(local) {
+		i(local) {
 			if (current) return;
 			transition_in(dependency.$$.fragment, local);
 			current = true;
 		},
-		o: function outro(local) {
+		o(local) {
 			transition_out(dependency.$$.fragment, local);
 			current = false;
 		},
-		d: function destroy(detaching) {
-			if (detaching) detach_dev(first);
+		d(detaching) {
+			if (detaching) detach(first);
 			destroy_component(dependency, detaching);
 		}
 	};
-
-	dispatch_dev("SvelteRegisterBlock", {
-		block,
-		id: create_each_block$5.name,
-		type: "each",
-		source: "(39:4) {#each visibleDependencies as dependency (dependency.id)}",
-		ctx
-	});
-
-	return block;
 }
 
-function create_fragment$g(ctx) {
+function create_fragment$e(ctx) {
 	let div;
 	let each_blocks = [];
 	let each_1_lookup = new Map();
 	let current;
 	let each_value = /*visibleDependencies*/ ctx[0];
-	validate_each_argument(each_value);
 	const get_key = ctx => /*dependency*/ ctx[6].id;
-	validate_each_keys(ctx, each_value, get_each_context$5, get_key);
 
 	for (let i = 0; i < each_value.length; i += 1) {
 		let child_ctx = get_each_context$5(ctx, each_value, i);
@@ -9507,22 +6484,18 @@ function create_fragment$g(ctx) {
 		each_1_lookup.set(key, each_blocks[i] = create_each_block$5(key, child_ctx));
 	}
 
-	const block = {
-		c: function create() {
+	return {
+		c() {
 			div = element("div");
 
 			for (let i = 0; i < each_blocks.length; i += 1) {
 				each_blocks[i].c();
 			}
 
-			attr_dev(div, "class", "dependency-container svelte-hatx0f");
-			add_location(div, file$f, 37, 0, 1039);
+			attr(div, "class", "dependency-container svelte-50yf7x");
 		},
-		l: function claim(nodes) {
-			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
-		},
-		m: function mount(target, anchor) {
-			insert_dev(target, div, anchor);
+		m(target, anchor) {
+			insert(target, div, anchor);
 
 			for (let i = 0; i < each_blocks.length; i += 1) {
 				each_blocks[i].m(div, null);
@@ -9530,17 +6503,15 @@ function create_fragment$g(ctx) {
 
 			current = true;
 		},
-		p: function update(ctx, [dirty]) {
+		p(ctx, [dirty]) {
 			if (dirty & /*visibleDependencies*/ 1) {
 				const each_value = /*visibleDependencies*/ ctx[0];
-				validate_each_argument(each_value);
 				group_outros();
-				validate_each_keys(ctx, each_value, get_each_context$5, get_key);
 				each_blocks = update_keyed_each(each_blocks, dirty, get_key, 1, ctx, each_value, each_1_lookup, div, outro_and_destroy_block, create_each_block$5, null, get_each_context$5);
 				check_outros();
 			}
 		},
-		i: function intro(local) {
+		i(local) {
 			if (current) return;
 
 			for (let i = 0; i < each_value.length; i += 1) {
@@ -9549,82 +6520,37 @@ function create_fragment$g(ctx) {
 
 			current = true;
 		},
-		o: function outro(local) {
+		o(local) {
 			for (let i = 0; i < each_blocks.length; i += 1) {
 				transition_out(each_blocks[i]);
 			}
 
 			current = false;
 		},
-		d: function destroy(detaching) {
-			if (detaching) detach_dev(div);
+		d(detaching) {
+			if (detaching) detach(div);
 
 			for (let i = 0; i < each_blocks.length; i += 1) {
 				each_blocks[i].d();
 			}
 		}
 	};
-
-	dispatch_dev("SvelteRegisterBlock", {
-		block,
-		id: create_fragment$g.name,
-		type: "component",
-		source: "",
-		ctx
-	});
-
-	return block;
 }
 
-const type$1 = "body";
-
-function instance$g($$self, $$props, $$invalidate) {
+function instance$e($$self, $$props, $$invalidate) {
 	let $taskStore;
 	let $visibleHeight;
-	validate_store(taskStore, "taskStore");
 	component_subscribe($$self, taskStore, $$value => $$invalidate(4, $taskStore = $$value));
 	const { visibleHeight } = getContext("dimensions");
-	validate_store(visibleHeight, "visibleHeight");
 	component_subscribe($$self, visibleHeight, value => $$invalidate(5, $visibleHeight = value));
 	let { paddingTop } = $$props;
 	let { dependencies = [] } = $$props;
 	let visibleDependencies = [];
-	const writable_props = ["paddingTop", "dependencies"];
-
-	Object.keys($$props).forEach(key => {
-		if (!~writable_props.indexOf(key) && key.slice(0, 2) !== "$$") console.warn(`<GanttDependencies> was created with unknown prop '${key}'`);
-	});
-
-	let { $$slots = {}, $$scope } = $$props;
-	validate_slots("GanttDependencies", $$slots, []);
 
 	$$self.$set = $$props => {
 		if ("paddingTop" in $$props) $$invalidate(2, paddingTop = $$props.paddingTop);
 		if ("dependencies" in $$props) $$invalidate(3, dependencies = $$props.dependencies);
 	};
-
-	$$self.$capture_state = () => ({
-		type: type$1,
-		getContext,
-		Dependency,
-		taskStore,
-		visibleHeight,
-		paddingTop,
-		dependencies,
-		visibleDependencies,
-		$taskStore,
-		$visibleHeight
-	});
-
-	$$self.$inject_state = $$props => {
-		if ("paddingTop" in $$props) $$invalidate(2, paddingTop = $$props.paddingTop);
-		if ("dependencies" in $$props) $$invalidate(3, dependencies = $$props.dependencies);
-		if ("visibleDependencies" in $$props) $$invalidate(0, visibleDependencies = $$props.visibleDependencies);
-	};
-
-	if ($$props && "$$inject" in $$props) {
-		$$self.$inject_state($$props.$$inject);
-	}
 
 	$$self.$$.update = () => {
 		if ($$self.$$.dirty & /*dependencies, $taskStore, paddingTop, $visibleHeight*/ 60) {
@@ -9650,40 +6576,10 @@ function instance$g($$self, $$props, $$invalidate) {
 	return [visibleDependencies, visibleHeight, paddingTop, dependencies];
 }
 
-class GanttDependencies extends SvelteComponentDev {
+class GanttDependencies extends SvelteComponent {
 	constructor(options) {
-		super(options);
-		init(this, options, instance$g, create_fragment$g, safe_not_equal, { paddingTop: 2, dependencies: 3 });
-
-		dispatch_dev("SvelteRegisterComponent", {
-			component: this,
-			tagName: "GanttDependencies",
-			options,
-			id: create_fragment$g.name
-		});
-
-		const { ctx } = this.$$;
-		const props = options.props || {};
-
-		if (/*paddingTop*/ ctx[2] === undefined && !("paddingTop" in props)) {
-			console.warn("<GanttDependencies> was created without expected prop 'paddingTop'");
-		}
-	}
-
-	get paddingTop() {
-		throw new Error("<GanttDependencies>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set paddingTop(value) {
-		throw new Error("<GanttDependencies>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	get dependencies() {
-		throw new Error("<GanttDependencies>: Props cannot be read directly from the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
-	}
-
-	set dependencies(value) {
-		throw new Error("<GanttDependencies>: Props cannot be set directly on the component instance unless compiling with 'accessors: true' or '<svelte:options accessors/>'");
+		super();
+		init(this, options, instance$e, create_fragment$e, safe_not_equal, { paddingTop: 2, dependencies: 3 });
 	}
 }
 
