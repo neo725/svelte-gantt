@@ -41,6 +41,7 @@
         from: headerTime.clone(),
         to: headerTime.clone().add(offset, header.unit),
         unit: header.unit,
+        classes: header.classes,
       })
       headerTime.add(offset, header.unit)
     }
@@ -91,7 +92,7 @@
 <div class="column-header-row">
   {#each _headers as _header}
     <div
-      class="column-header-cell"
+      class="column-header-cell {_header.classes}"
       class:sticky={header.sticky}
       style="width:{_header.width}px"
       on:click={() => dispatch('dateSelected', {

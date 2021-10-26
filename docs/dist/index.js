@@ -2035,13 +2035,14 @@ function get_each_context(ctx, list, i) {
 	return child_ctx;
 }
 
-// (92:2) {#each _headers as _header}
+// (93:2) {#each _headers as _header}
 function create_each_block(ctx) {
 	let div1;
 	let div0;
 	let t0_value = (/*_header*/ ctx[13].label || "N/A") + "";
 	let t0;
 	let t1;
+	let div1_class_value;
 	let mounted;
 	let dispose;
 
@@ -2056,7 +2057,7 @@ function create_each_block(ctx) {
 			t0 = text(t0_value);
 			t1 = space();
 			attr(div0, "class", "column-header-cell-label svelte-di0tt7");
-			attr(div1, "class", "column-header-cell svelte-di0tt7");
+			attr(div1, "class", div1_class_value = "column-header-cell " + /*_header*/ ctx[13].classes + " svelte-di0tt7");
 			set_style(div1, "width", /*_header*/ ctx[13].width + "px");
 			toggle_class(div1, "sticky", /*header*/ ctx[0].sticky);
 		},
@@ -2075,11 +2076,15 @@ function create_each_block(ctx) {
 			ctx = new_ctx;
 			if (dirty & /*_headers*/ 2 && t0_value !== (t0_value = (/*_header*/ ctx[13].label || "N/A") + "")) set_data(t0, t0_value);
 
+			if (dirty & /*_headers*/ 2 && div1_class_value !== (div1_class_value = "column-header-cell " + /*_header*/ ctx[13].classes + " svelte-di0tt7")) {
+				attr(div1, "class", div1_class_value);
+			}
+
 			if (dirty & /*_headers*/ 2) {
 				set_style(div1, "width", /*_header*/ ctx[13].width + "px");
 			}
 
-			if (dirty & /*header*/ 1) {
+			if (dirty & /*_headers, header*/ 3) {
 				toggle_class(div1, "sticky", /*header*/ ctx[0].sticky);
 			}
 		},
@@ -2211,7 +2216,8 @@ function instance$4($$self, $$props, $$invalidate) {
 						label: headerTime.format(header.format),
 						from: headerTime.clone(),
 						to: headerTime.clone().add(offset, header.unit),
-						unit: header.unit
+						unit: header.unit,
+						classes: header.classes
 					});
 
 					headerTime.add(offset, header.unit);
