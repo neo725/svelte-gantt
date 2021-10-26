@@ -2031,7 +2031,7 @@ class TimeRangeHeader extends SvelteComponent {
 
 function get_each_context(ctx, list, i) {
 	const child_ctx = ctx.slice();
-	child_ctx[13] = list[i];
+	child_ctx[12] = list[i];
 	return child_ctx;
 }
 
@@ -2039,15 +2039,9 @@ function get_each_context(ctx, list, i) {
 function create_each_block(ctx) {
 	let div1;
 	let div0;
-	let t0_value = (/*_header*/ ctx[13].label || "N/A") + "";
+	let t0_value = (/*_header*/ ctx[12].label || "N/A") + "";
 	let t0;
 	let t1;
-	let mounted;
-	let dispose;
-
-	function click_handler(...args) {
-		return /*click_handler*/ ctx[12](/*_header*/ ctx[13], ...args);
-	}
 
 	return {
 		c() {
@@ -2057,7 +2051,7 @@ function create_each_block(ctx) {
 			t1 = space();
 			attr(div0, "class", "column-header-cell-label svelte-12pmj5z");
 			attr(div1, "class", "column-header-cell svelte-12pmj5z");
-			set_style(div1, "width", /*_header*/ ctx[13].width + "px");
+			set_style(div1, "width", /*_header*/ ctx[12].width + "px");
 			toggle_class(div1, "sticky", /*header*/ ctx[0].sticky);
 		},
 		m(target, anchor) {
@@ -2065,18 +2059,12 @@ function create_each_block(ctx) {
 			append(div1, div0);
 			append(div0, t0);
 			append(div1, t1);
-
-			if (!mounted) {
-				dispose = listen(div1, "click", click_handler);
-				mounted = true;
-			}
 		},
-		p(new_ctx, dirty) {
-			ctx = new_ctx;
-			if (dirty & /*_headers*/ 2 && t0_value !== (t0_value = (/*_header*/ ctx[13].label || "N/A") + "")) set_data(t0, t0_value);
+		p(ctx, dirty) {
+			if (dirty & /*_headers*/ 2 && t0_value !== (t0_value = (/*_header*/ ctx[12].label || "N/A") + "")) set_data(t0, t0_value);
 
 			if (dirty & /*_headers*/ 2) {
-				set_style(div1, "width", /*_header*/ ctx[13].width + "px");
+				set_style(div1, "width", /*_header*/ ctx[12].width + "px");
 			}
 
 			if (dirty & /*header*/ 1) {
@@ -2085,8 +2073,6 @@ function create_each_block(ctx) {
 		},
 		d(detaching) {
 			if (detaching) detach(div1);
-			mounted = false;
-			dispose();
 		}
 	};
 }
@@ -2118,7 +2104,7 @@ function create_fragment$4(ctx) {
 			}
 		},
 		p(ctx, [dirty]) {
-			if (dirty & /*_headers, header, dispatch*/ 7) {
+			if (dirty & /*_headers, header*/ 3) {
 				each_value = /*_headers*/ ctx[1];
 				let i;
 
@@ -2155,8 +2141,8 @@ function instance$4($$self, $$props, $$invalidate) {
 	let $from;
 	const dispatch = createEventDispatcher();
 	const { from, to, width } = getContext("dimensions");
-	component_subscribe($$self, from, value => $$invalidate(10, $from = value));
-	component_subscribe($$self, width, value => $$invalidate(9, $width = value));
+	component_subscribe($$self, from, value => $$invalidate(9, $from = value));
+	component_subscribe($$self, width, value => $$invalidate(8, $width = value));
 	let { header } = $$props;
 	let { baseWidth } = $$props;
 	let { baseDuration } = $$props;
@@ -2164,42 +2150,36 @@ function instance$4($$self, $$props, $$invalidate) {
 	let { columnCount } = $$props;
 	let _headers = [];
 
-	const click_handler = _header => dispatch("dateSelected", {
-		from: _header.from,
-		to: _header.to,
-		unit: _header.unit
-	});
-
 	$$self.$set = $$props => {
 		if ("header" in $$props) $$invalidate(0, header = $$props.header);
-		if ("baseWidth" in $$props) $$invalidate(7, baseWidth = $$props.baseWidth);
-		if ("baseDuration" in $$props) $$invalidate(8, baseDuration = $$props.baseDuration);
-		if ("columnWidth" in $$props) $$invalidate(5, columnWidth = $$props.columnWidth);
-		if ("columnCount" in $$props) $$invalidate(6, columnCount = $$props.columnCount);
+		if ("baseWidth" in $$props) $$invalidate(6, baseWidth = $$props.baseWidth);
+		if ("baseDuration" in $$props) $$invalidate(7, baseDuration = $$props.baseDuration);
+		if ("columnWidth" in $$props) $$invalidate(4, columnWidth = $$props.columnWidth);
+		if ("columnCount" in $$props) $$invalidate(5, columnCount = $$props.columnCount);
 	};
 
 	$$self.$$.update = () => {
-		if ($$self.$$.dirty & /*header, baseDuration, baseWidth*/ 385) {
+		if ($$self.$$.dirty & /*header, baseDuration, baseWidth*/ 193) {
 			 {
 				const offset = header.offset || 1;
 				const duration$1 = duration(offset, header.unit).asMilliseconds();
 				const ratio = duration$1 / baseDuration;
-				$$invalidate(5, columnWidth = baseWidth * ratio);
+				$$invalidate(4, columnWidth = baseWidth * ratio);
 			}
 		}
 
-		if ($$self.$$.dirty & /*$width, columnWidth, columnCount*/ 608) {
+		if ($$self.$$.dirty & /*$width, columnWidth, columnCount*/ 304) {
 			 {
-				$$invalidate(6, columnCount = Math.ceil($width / columnWidth));
+				$$invalidate(5, columnCount = Math.ceil($width / columnWidth));
 
 				if (!isFinite(columnCount)) {
 					console.error("columnCount is not finite");
-					$$invalidate(6, columnCount = 0);
+					$$invalidate(5, columnCount = 0);
 				}
 			}
 		}
 
-		if ($$self.$$.dirty & /*$from, header, columnCount, columnWidth, $width*/ 1633) {
+		if ($$self.$$.dirty & /*$from, header, columnCount, columnWidth, $width*/ 817) {
 			 {
 				const headers = [];
 				let headerTime = $from.clone().startOf(header.unit);
@@ -2226,17 +2206,12 @@ function instance$4($$self, $$props, $$invalidate) {
 	return [
 		header,
 		_headers,
-		dispatch,
 		from,
 		width,
 		columnWidth,
 		columnCount,
 		baseWidth,
-		baseDuration,
-		$width,
-		$from,
-		to,
-		click_handler
+		baseDuration
 	];
 }
 
@@ -2246,10 +2221,10 @@ class ColumnHeaderRow extends SvelteComponent {
 
 		init(this, options, instance$4, create_fragment$4, safe_not_equal, {
 			header: 0,
-			baseWidth: 7,
-			baseDuration: 8,
-			columnWidth: 5,
-			columnCount: 6
+			baseWidth: 6,
+			baseDuration: 7,
+			columnWidth: 4,
+			columnCount: 5
 		});
 	}
 }

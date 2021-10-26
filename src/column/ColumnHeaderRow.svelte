@@ -94,12 +94,7 @@
     <div
       class="column-header-cell"
       class:sticky={header.sticky}
-      style="width:{_header.width}px"
-      on:click={() => dispatch('dateSelected', {
-          from: _header.from,
-          to: _header.to,
-          unit: _header.unit,
-        })}>
+      style="width:{_header.width}px">
       <div class="column-header-cell-label">{_header.label || 'N/A'}</div>
     </div>
   {/each}
