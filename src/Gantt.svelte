@@ -21,7 +21,7 @@
   } from './core/store'
   import { Task, Row, TimeRange, TimeRangeHeader, Milestone } from './entities'
   import { Columns, ColumnHeader } from './column'
-  import { Resizer } from './ui'
+  // import { Resizer } from './ui'
 
   import { GanttUtils, getPositionByDate } from './utils/utils'
   import { getRelativePos, debounce, throttle } from './utils/domUtils'
@@ -747,7 +747,7 @@
       on:init={onModuleInit}
       {visibleRows} />
 
-    <Resizer x={tableWidth} on:resize={onResize} container={ganttElement} />
+    <!-- <Resizer x={tableWidth} on:resize={onResize} container={ganttElement} /> -->
   {/each}
 
   <div
