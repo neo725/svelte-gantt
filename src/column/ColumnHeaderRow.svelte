@@ -72,16 +72,16 @@
     font-weight: 300;
     transition: background 0.2s;
 
-    cursor: pointer;
+    /* cursor: pointer; */
     user-select: none;
 
     border-right: #efefef 1px solid;
     border-bottom: #efefef 1px solid;
   }
 
-  .column-header-cell:hover {
+  /* .column-header-cell:hover {
     background: #f9f9f9;
-  }
+  } */
 
   .column-header-cell.sticky > .column-header-cell-label {
     position: sticky;
@@ -92,7 +92,7 @@
 <div class="column-header-row">
   {#each _headers as _header}
     <div
-      class="column-header-cell {_header.classes}"
+      class="column-header-cell"
       class:sticky={header.sticky}
       style="width:{_header.width}px"
       on:click={() => dispatch('dateSelected', {

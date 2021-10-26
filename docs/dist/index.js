@@ -2042,7 +2042,6 @@ function create_each_block(ctx) {
 	let t0_value = (/*_header*/ ctx[13].label || "N/A") + "";
 	let t0;
 	let t1;
-	let div1_class_value;
 	let mounted;
 	let dispose;
 
@@ -2056,8 +2055,8 @@ function create_each_block(ctx) {
 			div0 = element("div");
 			t0 = text(t0_value);
 			t1 = space();
-			attr(div0, "class", "column-header-cell-label svelte-di0tt7");
-			attr(div1, "class", div1_class_value = "column-header-cell " + /*_header*/ ctx[13].classes + " svelte-di0tt7");
+			attr(div0, "class", "column-header-cell-label svelte-12pmj5z");
+			attr(div1, "class", "column-header-cell svelte-12pmj5z");
 			set_style(div1, "width", /*_header*/ ctx[13].width + "px");
 			toggle_class(div1, "sticky", /*header*/ ctx[0].sticky);
 		},
@@ -2076,15 +2075,11 @@ function create_each_block(ctx) {
 			ctx = new_ctx;
 			if (dirty & /*_headers*/ 2 && t0_value !== (t0_value = (/*_header*/ ctx[13].label || "N/A") + "")) set_data(t0, t0_value);
 
-			if (dirty & /*_headers*/ 2 && div1_class_value !== (div1_class_value = "column-header-cell " + /*_header*/ ctx[13].classes + " svelte-di0tt7")) {
-				attr(div1, "class", div1_class_value);
-			}
-
 			if (dirty & /*_headers*/ 2) {
 				set_style(div1, "width", /*_header*/ ctx[13].width + "px");
 			}
 
-			if (dirty & /*_headers, header*/ 3) {
+			if (dirty & /*header*/ 1) {
 				toggle_class(div1, "sticky", /*header*/ ctx[0].sticky);
 			}
 		},
@@ -2113,7 +2108,7 @@ function create_fragment$4(ctx) {
 				each_blocks[i].c();
 			}
 
-			attr(div, "class", "column-header-row svelte-di0tt7");
+			attr(div, "class", "column-header-row svelte-12pmj5z");
 		},
 		m(target, anchor) {
 			insert(target, div, anchor);
