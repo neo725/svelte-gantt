@@ -3235,7 +3235,7 @@ function create_each_block$2(ctx) {
 }
 
 function create_fragment$7(ctx) {
-	let div9;
+	let div13;
 	let t0;
 	let div8;
 	let div2;
@@ -3263,7 +3263,9 @@ function create_fragment$7(ctx) {
 	let t6;
 	let div7_resize_listener;
 	let div8_class_value;
-	let div9_class_value;
+	let t7;
+	let div12;
+	let div13_class_value;
 	let current;
 	let mounted;
 	let dispose;
@@ -3344,7 +3346,7 @@ function create_fragment$7(ctx) {
 
 	return {
 		c() {
-			div9 = element("div");
+			div13 = element("div");
 
 			for (let i = 0; i < each_blocks_5.length; i += 1) {
 				each_blocks_5[i].c();
@@ -3393,6 +3395,9 @@ function create_fragment$7(ctx) {
 				each_blocks[i].c();
 			}
 
+			t7 = space();
+			div12 = element("div");
+			div12.innerHTML = `<div class="sg-table-header"><div class="sg-table-header"><div class="sg-table-header-cell sg-table-cell sg-table-header-cell-last"><span>last#</span></div></div></div>`;
 			attr(div0, "class", "header-container svelte-1ny10s5");
 			set_style(div0, "width", /*$_width*/ ctx[23] + "px");
 			attr(div1, "class", "sg-header-scroller svelte-1ny10s5");
@@ -3410,18 +3415,19 @@ function create_fragment$7(ctx) {
 			toggle_class(div7, "zooming", /*zooming*/ ctx[14]);
 			attr(div8, "class", div8_class_value = "sg-timeline sg-view rows-count-" + /*visibleRows*/ ctx[19].length + " svelte-1ny10s5");
 			toggle_class(div8, "sg-timeline-rows-0", /*noVisibleRows*/ ctx[21]);
-			attr(div9, "class", div9_class_value = "sg-gantt " + /*classes*/ ctx[4] + " svelte-1ny10s5");
-			toggle_class(div9, "sg-disable-transition", !/*disableTransition*/ ctx[22]);
+			attr(div12, "class", "sg-table sg-view");
+			attr(div13, "class", div13_class_value = "sg-gantt " + /*classes*/ ctx[4] + " svelte-1ny10s5");
+			toggle_class(div13, "sg-disable-transition", !/*disableTransition*/ ctx[22]);
 		},
 		m(target, anchor) {
-			insert(target, div9, anchor);
+			insert(target, div13, anchor);
 
 			for (let i = 0; i < each_blocks_5.length; i += 1) {
-				each_blocks_5[i].m(div9, null);
+				each_blocks_5[i].m(div13, null);
 			}
 
-			append(div9, t0);
-			append(div9, div8);
+			append(div13, t0);
+			append(div13, div8);
 			append(div8, div2);
 			append(div2, div1);
 			append(div1, div0);
@@ -3468,7 +3474,9 @@ function create_fragment$7(ctx) {
 
 			/*div7_binding*/ ctx[119](div7);
 			div7_resize_listener = add_resize_listener(div7, /*div7_elementresize_handler*/ ctx[120].bind(div7));
-			/*div9_binding*/ ctx[121](div9);
+			append(div13, t7);
+			append(div13, div12);
+			/*div13_binding*/ ctx[121](div13);
 			current = true;
 
 			if (!mounted) {
@@ -3476,8 +3484,8 @@ function create_fragment$7(ctx) {
 					action_destroyer(ctx[42].call(null, div1)),
 					action_destroyer(ctx[41].call(null, div7)),
 					listen(div7, "wheel", /*onwheel*/ ctx[43]),
-					listen(div9, "click", onEvent),
-					listen(div9, "mouseover", onEvent)
+					listen(div13, "click", onEvent),
+					listen(div13, "mouseover", onEvent)
 				];
 
 				mounted = true;
@@ -3498,7 +3506,7 @@ function create_fragment$7(ctx) {
 						each_blocks_5[i] = create_each_block_5(child_ctx);
 						each_blocks_5[i].c();
 						transition_in(each_blocks_5[i], 1);
-						each_blocks_5[i].m(div9, t0);
+						each_blocks_5[i].m(div13, t0);
 					}
 				}
 
@@ -3610,12 +3618,12 @@ function create_fragment$7(ctx) {
 				toggle_class(div8, "sg-timeline-rows-0", /*noVisibleRows*/ ctx[21]);
 			}
 
-			if (!current || dirty[0] & /*classes*/ 16 && div9_class_value !== (div9_class_value = "sg-gantt " + /*classes*/ ctx[4] + " svelte-1ny10s5")) {
-				attr(div9, "class", div9_class_value);
+			if (!current || dirty[0] & /*classes*/ 16 && div13_class_value !== (div13_class_value = "sg-gantt " + /*classes*/ ctx[4] + " svelte-1ny10s5")) {
+				attr(div13, "class", div13_class_value);
 			}
 
 			if (dirty[0] & /*classes, disableTransition*/ 4194320) {
-				toggle_class(div9, "sg-disable-transition", !/*disableTransition*/ ctx[22]);
+				toggle_class(div13, "sg-disable-transition", !/*disableTransition*/ ctx[22]);
 			}
 		},
 		i(local) {
@@ -3687,7 +3695,7 @@ function create_fragment$7(ctx) {
 			current = false;
 		},
 		d(detaching) {
-			if (detaching) detach(div9);
+			if (detaching) detach(div13);
 			destroy_each(each_blocks_5, detaching);
 			destroy_component(columnheader);
 
@@ -3716,7 +3724,7 @@ function create_fragment$7(ctx) {
 			destroy_each(each_blocks, detaching);
 			/*div7_binding*/ ctx[119](null);
 			div7_resize_listener();
-			/*div9_binding*/ ctx[121](null);
+			/*div13_binding*/ ctx[121](null);
 			mounted = false;
 			run_all(dispose);
 		}
@@ -4294,7 +4302,7 @@ function instance$7($$self, $$props, $$invalidate) {
 		visibleWidth.set($visibleWidth);
 	}
 
-	function div9_binding($$value) {
+	function div13_binding($$value) {
 		binding_callbacks[$$value ? "unshift" : "push"](() => {
 			$$invalidate(9, ganttElement = $$value);
 		});
@@ -4580,7 +4588,7 @@ function instance$7($$self, $$props, $$invalidate) {
 		div4_binding,
 		div7_binding,
 		div7_elementresize_handler,
-		div9_binding
+		div13_binding
 	];
 }
 

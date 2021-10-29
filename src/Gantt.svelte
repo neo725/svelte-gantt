@@ -819,4 +819,14 @@
       </div>
     </div>
   </div>
+  <div class="sg-table sg-view">
+    <div class="sg-table-header">
+      <div class="sg-table-header">
+        <div
+          class="sg-table-header-cell sg-table-cell sg-table-header-cell-last">
+          <span>last#</span>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
