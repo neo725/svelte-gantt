@@ -171,15 +171,18 @@
     class="sg-table-header"
     style="height:{$headerHeight}px"
     bind:this={headerContainer}>
-    <div class="sg-table-header-cell sg-table-cell sg-table-cell-0">
-      <span>123</span>
-    </div>
     {#each tableHeaders as header}
-      <div
-        class="sg-table-header-cell sg-table-cell"
-        style="width:{header.width}px">
-        {header.title}
-      </div>
+      {#if header.index == 0}
+        <div class="sg-table-header-cell sg-table-cell sg-table-cell-0">
+          <span>123</span>
+        </div>
+      {:else}
+        <div
+          class="sg-table-header-cell sg-table-cell"
+          style="width:{header.width}px">
+          {header.title}
+        </div>
+      {/if}
     {/each}
   </div>
 
