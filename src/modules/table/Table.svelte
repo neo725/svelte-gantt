@@ -21,7 +21,13 @@
   // property: property of row to display in the cell
   // width: width of column
   export let tableHeaders = [
-    { title: 'Name', property: 'label', width: 100, classes: '' },
+    {
+      title: 'Name',
+      property: 'label',
+      width: 100,
+      classes: '',
+      headerHtml: '',
+    },
   ]
 
   const { from, to, width, visibleWidth, headerHeight } = getContext(

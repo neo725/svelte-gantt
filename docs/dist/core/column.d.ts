@@ -2,6 +2,7 @@ interface Column {
     from: any;
     left: number;
     width: number;
+    classes: string;
     /**
      * Duration in milliseconds
      */
