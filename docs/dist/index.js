@@ -2039,7 +2039,7 @@ function get_each_context(ctx, list, i) {
 	return child_ctx;
 }
 
-// (93:2) {#each _headers as _header}
+// (101:2) {#each _headers as _header}
 function create_each_block(ctx) {
 	let div1;
 	let div0;
@@ -2190,15 +2190,21 @@ function instance$4($$self, $$props, $$invalidate) {
 				const offset = header.offset || 1;
 
 				for (let i = 0; i < columnCount; i++) {
-					headers.push({
+					let _header = {
 						width: Math.min(columnWidth, $width),
 						label: headerTime.format(header.format),
 						from: headerTime.clone(),
 						to: headerTime.clone().add(offset, header.unit),
 						unit: header.unit,
 						classes: header.classes
-					});
+					};
 
+					if (_header.from.isSame(new Date(), "day")) {
+						_header.label = "TODAY";
+						_header.classes = "sg-table-header-cell-today";
+					}
+
+					headers.push(_header);
 					headerTime.add(offset, header.unit);
 				}
 

@@ -35,14 +35,22 @@
     const offset = header.offset || 1
 
     for (let i = 0; i < columnCount; i++) {
-      headers.push({
+      let _header = {
         width: Math.min(columnWidth, $width),
         label: headerTime.format(header.format),
         from: headerTime.clone(),
         to: headerTime.clone().add(offset, header.unit),
         unit: header.unit,
         classes: header.classes,
-      })
+      }
+
+      if (_header.from.isSame(new Date(), 'day')) {
+        _header.label = 'TODAY'
+        _header.classes = 'sg-table-header-cell-today'
+      }
+
+      headers.push(_header)
+
       headerTime.add(offset, header.unit)
     }
     _headers = headers
