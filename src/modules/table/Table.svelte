@@ -177,7 +177,9 @@
       <div
         class="sg-table-header-cell sg-table-cell {header.classes || ''}"
         style="width:{header.width}px">
-        {header.title}
+        {#if header.headerHtml}
+          {@html header.headerHtml}
+        {:else}{header.title}{/if}
       </div>
     {/each}
   </div>
