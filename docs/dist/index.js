@@ -2039,7 +2039,7 @@ function get_each_context(ctx, list, i) {
 	return child_ctx;
 }
 
-// (103:2) {#each _headers as _header}
+// (108:2) {#each _headers as _header}
 function create_each_block(ctx) {
 	let div1;
 	let div0;
@@ -2055,9 +2055,9 @@ function create_each_block(ctx) {
 			t0 = text(t0_value);
 			t1 = space();
 			attr(div0, "class", "column-header-cell-label svelte-12pmj5z");
-			attr(div1, "class", div1_class_value = "column-header-cell " + (/*header*/ ctx[0].classes || "") + " svelte-12pmj5z");
+			attr(div1, "class", div1_class_value = "column-header-cell " + (/*_header*/ ctx[12].classes || "") + " svelte-12pmj5z");
 			set_style(div1, "width", /*_header*/ ctx[12].width + "px");
-			toggle_class(div1, "sticky", /*header*/ ctx[0].sticky);
+			toggle_class(div1, "sticky", /*_header*/ ctx[12].sticky);
 		},
 		m(target, anchor) {
 			insert(target, div1, anchor);
@@ -2066,18 +2066,18 @@ function create_each_block(ctx) {
 			append(div1, t1);
 		},
 		p(ctx, dirty) {
-			if (dirty & /*_headers*/ 2 && t0_value !== (t0_value = (/*_header*/ ctx[12].label || "N/A") + "")) set_data(t0, t0_value);
+			if (dirty & /*_headers*/ 1 && t0_value !== (t0_value = (/*_header*/ ctx[12].label || "N/A") + "")) set_data(t0, t0_value);
 
-			if (dirty & /*header*/ 1 && div1_class_value !== (div1_class_value = "column-header-cell " + (/*header*/ ctx[0].classes || "") + " svelte-12pmj5z")) {
+			if (dirty & /*_headers*/ 1 && div1_class_value !== (div1_class_value = "column-header-cell " + (/*_header*/ ctx[12].classes || "") + " svelte-12pmj5z")) {
 				attr(div1, "class", div1_class_value);
 			}
 
-			if (dirty & /*_headers*/ 2) {
+			if (dirty & /*_headers*/ 1) {
 				set_style(div1, "width", /*_header*/ ctx[12].width + "px");
 			}
 
-			if (dirty & /*header, header*/ 1) {
-				toggle_class(div1, "sticky", /*header*/ ctx[0].sticky);
+			if (dirty & /*_headers, _headers*/ 1) {
+				toggle_class(div1, "sticky", /*_header*/ ctx[12].sticky);
 			}
 		},
 		d(detaching) {
@@ -2088,7 +2088,7 @@ function create_each_block(ctx) {
 
 function create_fragment$4(ctx) {
 	let div;
-	let each_value = /*_headers*/ ctx[1];
+	let each_value = /*_headers*/ ctx[0];
 	let each_blocks = [];
 
 	for (let i = 0; i < each_value.length; i += 1) {
@@ -2113,8 +2113,8 @@ function create_fragment$4(ctx) {
 			}
 		},
 		p(ctx, [dirty]) {
-			if (dirty & /*header, _headers*/ 3) {
-				each_value = /*_headers*/ ctx[1];
+			if (dirty & /*_headers*/ 1) {
+				each_value = /*_headers*/ ctx[0];
 				let i;
 
 				for (i = 0; i < each_value.length; i += 1) {
@@ -2160,35 +2160,35 @@ function instance$4($$self, $$props, $$invalidate) {
 	let _headers = [];
 
 	$$self.$set = $$props => {
-		if ("header" in $$props) $$invalidate(0, header = $$props.header);
+		if ("header" in $$props) $$invalidate(5, header = $$props.header);
 		if ("baseWidth" in $$props) $$invalidate(6, baseWidth = $$props.baseWidth);
 		if ("baseDuration" in $$props) $$invalidate(7, baseDuration = $$props.baseDuration);
-		if ("columnWidth" in $$props) $$invalidate(4, columnWidth = $$props.columnWidth);
-		if ("columnCount" in $$props) $$invalidate(5, columnCount = $$props.columnCount);
+		if ("columnWidth" in $$props) $$invalidate(3, columnWidth = $$props.columnWidth);
+		if ("columnCount" in $$props) $$invalidate(4, columnCount = $$props.columnCount);
 	};
 
 	$$self.$$.update = () => {
-		if ($$self.$$.dirty & /*header, baseDuration, baseWidth*/ 193) {
+		if ($$self.$$.dirty & /*header, baseDuration, baseWidth*/ 224) {
 			 {
 				const offset = header.offset || 1;
 				const duration$1 = duration(offset, header.unit).asMilliseconds();
 				const ratio = duration$1 / baseDuration;
-				$$invalidate(4, columnWidth = baseWidth * ratio);
+				$$invalidate(3, columnWidth = baseWidth * ratio);
 			}
 		}
 
-		if ($$self.$$.dirty & /*$width, columnWidth, columnCount*/ 304) {
+		if ($$self.$$.dirty & /*$width, columnWidth, columnCount*/ 280) {
 			 {
-				$$invalidate(5, columnCount = Math.ceil($width / columnWidth));
+				$$invalidate(4, columnCount = Math.ceil($width / columnWidth));
 
 				if (!isFinite(columnCount)) {
 					console.error("columnCount is not finite");
-					$$invalidate(5, columnCount = 0);
+					$$invalidate(4, columnCount = 0);
 				}
 			}
 		}
 
-		if ($$self.$$.dirty & /*$from, header, columnCount, columnWidth, $width*/ 817) {
+		if ($$self.$$.dirty & /*$from, header, columnCount, columnWidth, $width*/ 824) {
 			 {
 				const headers = [];
 				let headerTime = $from.clone().startOf(header.unit);
@@ -2208,25 +2208,31 @@ function instance$4($$self, $$props, $$invalidate) {
 
 					if (isMarkToday && _header.from.isSame(new Date(), "day")) {
 						_header.label = "TODAY";
-						_header.classes = "sg-table-header-cell-today";
+						let _classes = _header.classes || "";
+
+						if (_classes.length > 0) {
+							_classes += " ";
+						}
+
+						_header.classes += "sg-table-header-cell-today";
 					}
 
 					headers.push(_header);
 					headerTime.add(offset, header.unit);
 				}
 
-				$$invalidate(1, _headers = headers);
+				$$invalidate(0, _headers = headers);
 			}
 		}
 	};
 
 	return [
-		header,
 		_headers,
 		from,
 		width,
 		columnWidth,
 		columnCount,
+		header,
 		baseWidth,
 		baseDuration
 	];
@@ -2237,11 +2243,11 @@ class ColumnHeaderRow extends SvelteComponent {
 		super();
 
 		init(this, options, instance$4, create_fragment$4, safe_not_equal, {
-			header: 0,
+			header: 5,
 			baseWidth: 6,
 			baseDuration: 7,
-			columnWidth: 4,
-			columnCount: 5
+			columnWidth: 3,
+			columnCount: 4
 		});
 	}
 }

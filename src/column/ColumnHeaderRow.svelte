@@ -48,7 +48,12 @@
 
       if (isMarkToday && _header.from.isSame(new Date(), 'day')) {
         _header.label = 'TODAY'
-        _header.classes = 'sg-table-header-cell-today'
+
+        let _classes = _header.classes || ''
+        if (_classes.length > 0) {
+          _classes += ' '
+        }
+        _header.classes += 'sg-table-header-cell-today'
       }
 
       headers.push(_header)
@@ -102,8 +107,8 @@
 <div class="column-header-row">
   {#each _headers as _header}
     <div
-      class="column-header-cell {header.classes || ''}"
-      class:sticky={header.sticky}
+      class="column-header-cell {_header.classes || ''}"
+      class:sticky={_header.sticky}
       style="width:{_header.width}px">
       <div class="column-header-cell-label">{_header.label || 'N/A'}</div>
     </div>
