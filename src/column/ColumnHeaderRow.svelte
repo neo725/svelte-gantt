@@ -49,7 +49,7 @@
       if (isMarkToday && _header.from.isSame(new Date(), 'day')) {
         _header.label = 'TODAY'
 
-        let _classes = _header.classes || ''
+        let _classes = _header['classes'] || ''
         if (_classes.length > 0) {
           _classes += ' '
         }
