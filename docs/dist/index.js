@@ -3418,7 +3418,7 @@ function create_fragment$7(ctx) {
 			t7 = space();
 			div13 = element("div");
 
-			div13.innerHTML = `<div class="sg-table-header"><div class="sg-table-header-cell sg-table-cell sg-table-header-cell-last"><div><i class="fas fa-angle-right"></i></div> 
+			div13.innerHTML = `<div class="sg-table-header sg-table-header-last"><div class="sg-table-header-cell sg-table-cell sg-table-header-cell-last"><div><i class="fas fa-angle-right"></i></div> 
         <div><i class="fas fa-angle-double-right"></i></div></div></div>`;
 
 			attr(div0, "class", "header-container svelte-1ny10s5");
@@ -3438,7 +3438,7 @@ function create_fragment$7(ctx) {
 			toggle_class(div7, "zooming", /*zooming*/ ctx[14]);
 			attr(div8, "class", div8_class_value = "sg-timeline sg-view rows-count-" + /*visibleRows*/ ctx[19].length + " svelte-1ny10s5");
 			toggle_class(div8, "sg-timeline-rows-0", /*noVisibleRows*/ ctx[21]);
-			attr(div13, "class", "sg-table sg-view");
+			attr(div13, "class", "sg-table sg-table-last sg-view");
 			attr(div14, "class", div14_class_value = "sg-gantt " + /*classes*/ ctx[4] + " svelte-1ny10s5");
 			toggle_class(div14, "sg-disable-transition", !/*disableTransition*/ ctx[22]);
 		},

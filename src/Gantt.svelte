@@ -819,8 +819,8 @@
       </div>
     </div>
   </div>
-  <div class="sg-table sg-view">
-    <div class="sg-table-header">
+  <div class="sg-table sg-table-last sg-view">
+    <div class="sg-table-header sg-table-header-last">
       <div class="sg-table-header-cell sg-table-cell sg-table-header-cell-last">
         <div>
           <i class="fas fa-angle-right" />
