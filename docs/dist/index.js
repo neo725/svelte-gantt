@@ -1131,7 +1131,7 @@ function create_if_block_4(ctx) {
 	return {
 		c() {
 			div = element("div");
-			attr(div, "class", "sg-task-background svelte-7lktx7");
+			attr(div, "class", "sg-task-background svelte-4jw0dj");
 			set_style(div, "width", /*model*/ ctx[0].amountDone + "%");
 		},
 		m(target, anchor) {
@@ -1148,7 +1148,7 @@ function create_if_block_4(ctx) {
 	};
 }
 
-// (318:4) {:else}
+// (347:4) {:else}
 function create_else_block(ctx) {
 	let t_value = /*model*/ ctx[0].label + "";
 	let t;
@@ -1169,7 +1169,7 @@ function create_else_block(ctx) {
 	};
 }
 
-// (316:26) 
+// (345:26) 
 function create_if_block_3(ctx) {
 	let html_tag;
 	let raw_value = /*taskContent*/ ctx[8](/*model*/ ctx[0]) + "";
@@ -1190,7 +1190,7 @@ function create_if_block_3(ctx) {
 	};
 }
 
-// (314:4) {#if model.html}
+// (343:4) {#if model.html}
 function create_if_block_2(ctx) {
 	let html_tag;
 	let raw_value = /*model*/ ctx[0].html + "";
@@ -1211,7 +1211,7 @@ function create_if_block_2(ctx) {
 	};
 }
 
-// (320:4) {#if model.showButton}
+// (349:4) {#if model.showButton}
 function create_if_block_1(ctx) {
 	let span;
 	let raw_value = /*model*/ ctx[0].buttonHtml + "";
@@ -1222,7 +1222,7 @@ function create_if_block_1(ctx) {
 	return {
 		c() {
 			span = element("span");
-			attr(span, "class", span_class_value = "sg-task-button " + /*model*/ ctx[0].buttonClasses + " svelte-7lktx7");
+			attr(span, "class", span_class_value = "sg-task-button " + /*model*/ ctx[0].buttonClasses + " svelte-4jw0dj");
 		},
 		m(target, anchor) {
 			insert(target, span, anchor);
@@ -1235,7 +1235,7 @@ function create_if_block_1(ctx) {
 		},
 		p(ctx, dirty) {
 			if (dirty[0] & /*model*/ 1 && raw_value !== (raw_value = /*model*/ ctx[0].buttonHtml + "")) span.innerHTML = raw_value;
-			if (dirty[0] & /*model*/ 1 && span_class_value !== (span_class_value = "sg-task-button " + /*model*/ ctx[0].buttonClasses + " svelte-7lktx7")) {
+			if (dirty[0] & /*model*/ 1 && span_class_value !== (span_class_value = "sg-task-button " + /*model*/ ctx[0].buttonClasses + " svelte-4jw0dj")) {
 				attr(span, "class", span_class_value);
 			}
 		},
@@ -1247,7 +1247,7 @@ function create_if_block_1(ctx) {
 	};
 }
 
-// (327:2) {#if model.labelBottom}
+// (356:2) {#if model.labelBottom}
 function create_if_block(ctx) {
 	let label;
 	let t_value = /*model*/ ctx[0].labelBottom + "";
@@ -1257,7 +1257,7 @@ function create_if_block(ctx) {
 		c() {
 			label = element("label");
 			t = text(t_value);
-			attr(label, "class", "sg-label-bottom svelte-7lktx7");
+			attr(label, "class", "sg-label-bottom svelte-4jw0dj");
 		},
 		m(target, anchor) {
 			insert(target, label, anchor);
@@ -1306,12 +1306,12 @@ function create_fragment(ctx) {
 			if (if_block2) if_block2.c();
 			t2 = space();
 			if (if_block3) if_block3.c();
-			attr(div0, "class", "sg-task-content svelte-7lktx7");
+			attr(div0, "class", "sg-task-content svelte-4jw0dj");
 			attr(div1, "data-task-id", div1_data_task_id_value = /*model*/ ctx[0].id);
-			attr(div1, "class", div1_class_value = "sg-task " + /*model*/ ctx[0].classes + " svelte-7lktx7");
+			attr(div1, "class", div1_class_value = "sg-task " + /*model*/ ctx[0].classes + " svelte-4jw0dj");
 			set_style(div1, "width", /*_position*/ ctx[6].width + "px");
-			set_style(div1, "height", /*height*/ ctx[1] + "px");
-			set_style(div1, "transform", "translate(" + /*_position*/ ctx[6].x + "px, " + /*_position*/ ctx[6].y + "px)");
+			set_style(div1, "max-height", /*height*/ ctx[1] + "px");
+			set_style(div1, "transform", "translate(" + /*_position*/ ctx[6].x + "px,\n  " + /*_position*/ ctx[6].y + "px)");
 			toggle_class(div1, "moving", /*_dragging*/ ctx[4] || /*_resizing*/ ctx[5]);
 			toggle_class(div1, "selected", /*selected*/ ctx[7]);
 			toggle_class(div1, "animating", animating);
@@ -1389,7 +1389,7 @@ function create_fragment(ctx) {
 				attr(div1, "data-task-id", div1_data_task_id_value);
 			}
 
-			if (dirty[0] & /*model*/ 1 && div1_class_value !== (div1_class_value = "sg-task " + /*model*/ ctx[0].classes + " svelte-7lktx7")) {
+			if (dirty[0] & /*model*/ 1 && div1_class_value !== (div1_class_value = "sg-task " + /*model*/ ctx[0].classes + " svelte-4jw0dj")) {
 				attr(div1, "class", div1_class_value);
 			}
 
@@ -1398,11 +1398,11 @@ function create_fragment(ctx) {
 			}
 
 			if (dirty[0] & /*height*/ 2) {
-				set_style(div1, "height", /*height*/ ctx[1] + "px");
+				set_style(div1, "max-height", /*height*/ ctx[1] + "px");
 			}
 
 			if (dirty[0] & /*_position*/ 64) {
-				set_style(div1, "transform", "translate(" + /*_position*/ ctx[6].x + "px, " + /*_position*/ ctx[6].y + "px)");
+				set_style(div1, "transform", "translate(" + /*_position*/ ctx[6].x + "px,\n  " + /*_position*/ ctx[6].y + "px)");
 			}
 
 			if (dirty[0] & /*model, _dragging, _resizing*/ 49) {
@@ -1552,6 +1552,8 @@ function instance($$self, $$props, $$invalidate) {
 				}
 			} else {
 				// reset position
+				
+
 				($$invalidate(6, _position.x = task.left, _position), $$invalidate(6, _position.width = task.width, _position), $$invalidate(6, _position.y = task.top, _position));
 			}
 		};
@@ -1571,9 +1573,11 @@ function instance($$self, $$props, $$invalidate) {
 					setCursor("default");
 				},
 				onResize: event => {
+					
 					($$invalidate(6, _position.x = event.x, _position), $$invalidate(6, _position.width = event.width, _position), $$invalidate(5, _resizing = true));
 				},
 				onDrag: event => {
+					
 					($$invalidate(6, _position.x = event.x, _position), $$invalidate(6, _position.y = event.y, _position), $$invalidate(4, _dragging = true));
 				},
 				dragAllowed: () => {
