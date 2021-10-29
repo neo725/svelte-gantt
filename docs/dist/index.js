@@ -4955,58 +4955,77 @@ function get_each_context$3(ctx, list, i) {
 	return child_ctx;
 }
 
-// (40:12) {:else}
+// (96:6) {:else}
 function create_else_block_1(ctx) {
-	let t;
-	let if_block1_anchor;
-	let if_block0 = /*row*/ ctx[1].model.iconClass && create_if_block_7(ctx);
+	let t0;
+	let t1;
+	let if_block2_anchor;
+	let if_block0 = /*row*/ ctx[1].model.iconClass && create_if_block_9(ctx);
+	let if_block1 = /*row*/ ctx[1].model.imageSrc && create_if_block_8(ctx);
 
 	function select_block_type_2(ctx, dirty) {
-		if (/*row*/ ctx[1].model.headerHtml) return create_if_block_4$1;
-		if (/*header*/ ctx[12].renderer) return create_if_block_5;
-		if (/*header*/ ctx[12].type === "resourceInfo") return create_if_block_6;
+		if (/*row*/ ctx[1].model.headerHtml) return create_if_block_5;
+		if (/*header*/ ctx[12].renderer) return create_if_block_6;
+		if (/*header*/ ctx[12].type === "resourceInfo") return create_if_block_7;
 		return create_else_block_2;
 	}
 
 	let current_block_type = select_block_type_2(ctx);
-	let if_block1 = current_block_type(ctx);
+	let if_block2 = current_block_type(ctx);
 
 	return {
 		c() {
 			if (if_block0) if_block0.c();
-			t = space();
-			if_block1.c();
-			if_block1_anchor = empty();
+			t0 = space();
+			if (if_block1) if_block1.c();
+			t1 = space();
+			if_block2.c();
+			if_block2_anchor = empty();
 		},
 		m(target, anchor) {
 			if (if_block0) if_block0.m(target, anchor);
-			insert(target, t, anchor);
-			if_block1.m(target, anchor);
-			insert(target, if_block1_anchor, anchor);
+			insert(target, t0, anchor);
+			if (if_block1) if_block1.m(target, anchor);
+			insert(target, t1, anchor);
+			if_block2.m(target, anchor);
+			insert(target, if_block2_anchor, anchor);
 		},
 		p(ctx, dirty) {
 			if (/*row*/ ctx[1].model.iconClass) {
 				if (if_block0) {
 					if_block0.p(ctx, dirty);
 				} else {
-					if_block0 = create_if_block_7(ctx);
+					if_block0 = create_if_block_9(ctx);
 					if_block0.c();
-					if_block0.m(t.parentNode, t);
+					if_block0.m(t0.parentNode, t0);
 				}
 			} else if (if_block0) {
 				if_block0.d(1);
 				if_block0 = null;
 			}
 
-			if (current_block_type === (current_block_type = select_block_type_2(ctx)) && if_block1) {
-				if_block1.p(ctx, dirty);
-			} else {
-				if_block1.d(1);
-				if_block1 = current_block_type(ctx);
-
+			if (/*row*/ ctx[1].model.imageSrc) {
 				if (if_block1) {
+					if_block1.p(ctx, dirty);
+				} else {
+					if_block1 = create_if_block_8(ctx);
 					if_block1.c();
-					if_block1.m(if_block1_anchor.parentNode, if_block1_anchor);
+					if_block1.m(t1.parentNode, t1);
+				}
+			} else if (if_block1) {
+				if_block1.d(1);
+				if_block1 = null;
+			}
+
+			if (current_block_type === (current_block_type = select_block_type_2(ctx)) && if_block2) {
+				if_block2.p(ctx, dirty);
+			} else {
+				if_block2.d(1);
+				if_block2 = current_block_type(ctx);
+
+				if (if_block2) {
+					if_block2.c();
+					if_block2.m(if_block2_anchor.parentNode, if_block2_anchor);
 				}
 			}
 		},
@@ -5014,14 +5033,16 @@ function create_else_block_1(ctx) {
 		o: noop,
 		d(detaching) {
 			if (if_block0) if_block0.d(detaching);
-			if (detaching) detach(t);
-			if_block1.d(detaching);
-			if (detaching) detach(if_block1_anchor);
+			if (detaching) detach(t0);
+			if (if_block1) if_block1.d(detaching);
+			if (detaching) detach(t1);
+			if_block2.d(detaching);
+			if (detaching) detach(if_block2_anchor);
 		}
 	};
 }
 
-// (24:12) {#if header.type == 'tree'}
+// (77:6) {#if header.type == 'tree'}
 function create_if_block$3(ctx) {
 	let current;
 
@@ -5069,8 +5090,8 @@ function create_if_block$3(ctx) {
 	};
 }
 
-// (41:16) {#if row.model.iconClass}
-function create_if_block_7(ctx) {
+// (97:8) {#if row.model.iconClass}
+function create_if_block_9(ctx) {
 	let div;
 	let i;
 	let i_class_value;
@@ -5079,15 +5100,15 @@ function create_if_block_7(ctx) {
 		c() {
 			div = element("div");
 			i = element("i");
-			attr(i, "class", i_class_value = "" + (null_to_empty(/*row*/ ctx[1].model.iconClass) + " svelte-ffcwbe"));
-			attr(div, "class", "sg-table-icon svelte-ffcwbe");
+			attr(i, "class", i_class_value = "" + (null_to_empty(/*row*/ ctx[1].model.iconClass) + " svelte-nhba9s"));
+			attr(div, "class", "sg-table-icon svelte-nhba9s");
 		},
 		m(target, anchor) {
 			insert(target, div, anchor);
 			append(div, i);
 		},
 		p(ctx, dirty) {
-			if (dirty & /*row*/ 2 && i_class_value !== (i_class_value = "" + (null_to_empty(/*row*/ ctx[1].model.iconClass) + " svelte-ffcwbe"))) {
+			if (dirty & /*row*/ 2 && i_class_value !== (i_class_value = "" + (null_to_empty(/*row*/ ctx[1].model.iconClass) + " svelte-nhba9s"))) {
 				attr(i, "class", i_class_value);
 			}
 		},
@@ -5097,7 +5118,41 @@ function create_if_block_7(ctx) {
 	};
 }
 
-// (56:16) {:else}
+// (102:8) {#if row.model.imageSrc}
+function create_if_block_8(ctx) {
+	let div;
+	let img;
+	let img_src_value;
+	let img_alt_value;
+
+	return {
+		c() {
+			div = element("div");
+			img = element("img");
+			if (img.src !== (img_src_value = /*row*/ ctx[1].model.imageSrc)) attr(img, "src", img_src_value);
+			attr(img, "alt", img_alt_value = /*row*/ ctx[1].model.label);
+			attr(div, "class", "sg-table-icon svelte-nhba9s");
+		},
+		m(target, anchor) {
+			insert(target, div, anchor);
+			append(div, img);
+		},
+		p(ctx, dirty) {
+			if (dirty & /*row*/ 2 && img.src !== (img_src_value = /*row*/ ctx[1].model.imageSrc)) {
+				attr(img, "src", img_src_value);
+			}
+
+			if (dirty & /*row*/ 2 && img_alt_value !== (img_alt_value = /*row*/ ctx[1].model.label)) {
+				attr(img, "alt", img_alt_value);
+			}
+		},
+		d(detaching) {
+			if (detaching) detach(div);
+		}
+	};
+}
+
+// (115:8) {:else}
 function create_else_block_2(ctx) {
 	let t_value = /*row*/ ctx[1].model[/*header*/ ctx[12].property] + "";
 	let t;
@@ -5118,8 +5173,8 @@ function create_else_block_2(ctx) {
 	};
 }
 
-// (51:57) 
-function create_if_block_6(ctx) {
+// (112:49) 
+function create_if_block_7(ctx) {
 	let img;
 	let img_src_value;
 	let t0;
@@ -5133,7 +5188,7 @@ function create_if_block_6(ctx) {
 			t0 = space();
 			div = element("div");
 			t1 = text(t1_value);
-			attr(img, "class", "sg-resource-image svelte-ffcwbe");
+			attr(img, "class", "sg-resource-image svelte-nhba9s");
 			if (img.src !== (img_src_value = /*row*/ ctx[1].model.imageSrc)) attr(img, "src", img_src_value);
 			attr(img, "alt", "");
 			attr(div, "class", "sg-resource-title");
@@ -5159,8 +5214,8 @@ function create_if_block_6(ctx) {
 	};
 }
 
-// (49:42) 
-function create_if_block_5(ctx) {
+// (110:34) 
+function create_if_block_6(ctx) {
 	let html_tag;
 	let raw_value = /*header*/ ctx[12].renderer(/*row*/ ctx[1]) + "";
 
@@ -5180,8 +5235,8 @@ function create_if_block_5(ctx) {
 	};
 }
 
-// (47:16) {#if row.model.headerHtml}
-function create_if_block_4$1(ctx) {
+// (108:8) {#if row.model.headerHtml}
+function create_if_block_5(ctx) {
 	let html_tag;
 	let raw_value = /*row*/ ctx[1].model.headerHtml + "";
 
@@ -5201,8 +5256,8 @@ function create_if_block_4$1(ctx) {
 	};
 }
 
-// (26:20) {#if row.model.iconClass}
-function create_if_block_3$1(ctx) {
+// (79:10) {#if row.model.iconClass}
+function create_if_block_4$1(ctx) {
 	let div;
 	let i;
 	let i_class_value;
@@ -5211,15 +5266,15 @@ function create_if_block_3$1(ctx) {
 		c() {
 			div = element("div");
 			i = element("i");
-			attr(i, "class", i_class_value = "" + (null_to_empty(/*row*/ ctx[1].model.iconClass) + " svelte-ffcwbe"));
-			attr(div, "class", "sg-table-icon svelte-ffcwbe");
+			attr(i, "class", i_class_value = "" + (null_to_empty(/*row*/ ctx[1].model.iconClass) + " svelte-nhba9s"));
+			attr(div, "class", "sg-table-icon svelte-nhba9s");
 		},
 		m(target, anchor) {
 			insert(target, div, anchor);
 			append(div, i);
 		},
 		p(ctx, dirty) {
-			if (dirty & /*row*/ 2 && i_class_value !== (i_class_value = "" + (null_to_empty(/*row*/ ctx[1].model.iconClass) + " svelte-ffcwbe"))) {
+			if (dirty & /*row*/ 2 && i_class_value !== (i_class_value = "" + (null_to_empty(/*row*/ ctx[1].model.iconClass) + " svelte-nhba9s"))) {
 				attr(i, "class", i_class_value);
 			}
 		},
@@ -5229,7 +5284,41 @@ function create_if_block_3$1(ctx) {
 	};
 }
 
-// (36:20) {:else}
+// (84:10) {#if row.model.imageSrc}
+function create_if_block_3$1(ctx) {
+	let div;
+	let img;
+	let img_src_value;
+	let img_alt_value;
+
+	return {
+		c() {
+			div = element("div");
+			img = element("img");
+			if (img.src !== (img_src_value = /*row*/ ctx[1].model.imageSrc)) attr(img, "src", img_src_value);
+			attr(img, "alt", img_alt_value = /*row*/ ctx[1].model.label);
+			attr(div, "class", "sg-table-icon svelte-nhba9s");
+		},
+		m(target, anchor) {
+			insert(target, div, anchor);
+			append(div, img);
+		},
+		p(ctx, dirty) {
+			if (dirty & /*row*/ 2 && img.src !== (img_src_value = /*row*/ ctx[1].model.imageSrc)) {
+				attr(img, "src", img_src_value);
+			}
+
+			if (dirty & /*row*/ 2 && img_alt_value !== (img_alt_value = /*row*/ ctx[1].model.label)) {
+				attr(img, "alt", img_alt_value);
+			}
+		},
+		d(detaching) {
+			if (detaching) detach(div);
+		}
+	};
+}
+
+// (94:10) {:else}
 function create_else_block$2(ctx) {
 	let t_value = /*row*/ ctx[1].model[/*header*/ ctx[12].property] + "";
 	let t;
@@ -5250,7 +5339,7 @@ function create_else_block$2(ctx) {
 	};
 }
 
-// (34:46) 
+// (92:36) 
 function create_if_block_2$1(ctx) {
 	let html_tag;
 	let raw_value = /*header*/ ctx[12].renderer(/*row*/ ctx[1]) + "";
@@ -5271,7 +5360,7 @@ function create_if_block_2$1(ctx) {
 	};
 }
 
-// (32:20) {#if row.model.headerHtml}
+// (90:10) {#if row.model.headerHtml}
 function create_if_block_1$2(ctx) {
 	let html_tag;
 	let raw_value = /*row*/ ctx[1].model.headerHtml + "";
@@ -5292,11 +5381,13 @@ function create_if_block_1$2(ctx) {
 	};
 }
 
-// (25:16) <TableTreeCell on:rowCollapsed on:rowExpanded {row}>
+// (78:8) <TableTreeCell on:rowCollapsed on:rowExpanded {row}>
 function create_default_slot(ctx) {
-	let t;
-	let if_block1_anchor;
-	let if_block0 = /*row*/ ctx[1].model.iconClass && create_if_block_3$1(ctx);
+	let t0;
+	let t1;
+	let if_block2_anchor;
+	let if_block0 = /*row*/ ctx[1].model.iconClass && create_if_block_4$1(ctx);
+	let if_block1 = /*row*/ ctx[1].model.imageSrc && create_if_block_3$1(ctx);
 
 	function select_block_type_1(ctx, dirty) {
 		if (/*row*/ ctx[1].model.headerHtml) return create_if_block_1$2;
@@ -5305,57 +5396,76 @@ function create_default_slot(ctx) {
 	}
 
 	let current_block_type = select_block_type_1(ctx);
-	let if_block1 = current_block_type(ctx);
+	let if_block2 = current_block_type(ctx);
 
 	return {
 		c() {
 			if (if_block0) if_block0.c();
-			t = space();
-			if_block1.c();
-			if_block1_anchor = empty();
+			t0 = space();
+			if (if_block1) if_block1.c();
+			t1 = space();
+			if_block2.c();
+			if_block2_anchor = empty();
 		},
 		m(target, anchor) {
 			if (if_block0) if_block0.m(target, anchor);
-			insert(target, t, anchor);
-			if_block1.m(target, anchor);
-			insert(target, if_block1_anchor, anchor);
+			insert(target, t0, anchor);
+			if (if_block1) if_block1.m(target, anchor);
+			insert(target, t1, anchor);
+			if_block2.m(target, anchor);
+			insert(target, if_block2_anchor, anchor);
 		},
 		p(ctx, dirty) {
 			if (/*row*/ ctx[1].model.iconClass) {
 				if (if_block0) {
 					if_block0.p(ctx, dirty);
 				} else {
-					if_block0 = create_if_block_3$1(ctx);
+					if_block0 = create_if_block_4$1(ctx);
 					if_block0.c();
-					if_block0.m(t.parentNode, t);
+					if_block0.m(t0.parentNode, t0);
 				}
 			} else if (if_block0) {
 				if_block0.d(1);
 				if_block0 = null;
 			}
 
-			if (current_block_type === (current_block_type = select_block_type_1(ctx)) && if_block1) {
-				if_block1.p(ctx, dirty);
-			} else {
-				if_block1.d(1);
-				if_block1 = current_block_type(ctx);
-
+			if (/*row*/ ctx[1].model.imageSrc) {
 				if (if_block1) {
+					if_block1.p(ctx, dirty);
+				} else {
+					if_block1 = create_if_block_3$1(ctx);
 					if_block1.c();
-					if_block1.m(if_block1_anchor.parentNode, if_block1_anchor);
+					if_block1.m(t1.parentNode, t1);
+				}
+			} else if (if_block1) {
+				if_block1.d(1);
+				if_block1 = null;
+			}
+
+			if (current_block_type === (current_block_type = select_block_type_1(ctx)) && if_block2) {
+				if_block2.p(ctx, dirty);
+			} else {
+				if_block2.d(1);
+				if_block2 = current_block_type(ctx);
+
+				if (if_block2) {
+					if_block2.c();
+					if_block2.m(if_block2_anchor.parentNode, if_block2_anchor);
 				}
 			}
 		},
 		d(detaching) {
 			if (if_block0) if_block0.d(detaching);
-			if (detaching) detach(t);
-			if_block1.d(detaching);
-			if (detaching) detach(if_block1_anchor);
+			if (detaching) detach(t0);
+			if (if_block1) if_block1.d(detaching);
+			if (detaching) detach(t1);
+			if_block2.d(detaching);
+			if (detaching) detach(if_block2_anchor);
 		}
 	};
 }
 
-// (22:4) {#each headers as header}
+// (73:2) {#each headers as header}
 function create_each_block$3(ctx) {
 	let div;
 	let current_block_type_index;
@@ -5378,7 +5488,7 @@ function create_each_block$3(ctx) {
 			div = element("div");
 			if_block.c();
 			t = space();
-			attr(div, "class", "sg-table-body-cell sg-table-cell svelte-ffcwbe");
+			attr(div, "class", "sg-table-body-cell sg-table-cell svelte-nhba9s");
 			set_style(div, "width", /*header*/ ctx[12].width + "px");
 		},
 		m(target, anchor) {
@@ -5456,7 +5566,7 @@ function create_fragment$9(ctx) {
 				each_blocks[i].c();
 			}
 
-			attr(div, "class", div_class_value = "sg-table-row " + (/*row*/ ctx[1].model.class || "") + " svelte-ffcwbe");
+			attr(div, "class", div_class_value = "sg-table-row " + (/*row*/ ctx[1].model.class || "") + " svelte-nhba9s");
 			set_style(div, "height", /*$rowHeight*/ ctx[2] + "px");
 			attr(div, "data-row-id", div_data_row_id_value = /*row*/ ctx[1].model.id);
 			toggle_class(div, "sg-row-expanded", /*row*/ ctx[1].expanded);
@@ -5500,7 +5610,7 @@ function create_fragment$9(ctx) {
 				check_outros();
 			}
 
-			if (!current || dirty & /*row*/ 2 && div_class_value !== (div_class_value = "sg-table-row " + (/*row*/ ctx[1].model.class || "") + " svelte-ffcwbe")) {
+			if (!current || dirty & /*row*/ 2 && div_class_value !== (div_class_value = "sg-table-row " + (/*row*/ ctx[1].model.class || "") + " svelte-nhba9s")) {
 				attr(div, "class", div_class_value);
 			}
 
