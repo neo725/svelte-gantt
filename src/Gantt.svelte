@@ -42,7 +42,7 @@
   $: if (mounted) initTimeRanges(timeRanges)
 
   export let rowPadding = 6
-  export let rowHeight = 52
+  export let rowHeight = 48
   const _rowHeight = writable(rowHeight)
   const _rowPadding = writable(rowPadding)
 
