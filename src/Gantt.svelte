@@ -822,7 +822,12 @@
   <div class="sg-table sg-view">
     <div class="sg-table-header">
       <div class="sg-table-header-cell sg-table-cell sg-table-header-cell-last">
-        <span>last#</span>
+        <div>
+          <i class="fas fa-angle-right" />
+        </div>
+        <div>
+          <i class="fas fa-angle-double-right" />
+        </div>
       </div>
     </div>
   </div>
