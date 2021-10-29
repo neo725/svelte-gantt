@@ -175,10 +175,7 @@
 </style>
 
 <div class="sg-table sg-view" style="width:{tableWidth}px;">
-  <div
-    class="sg-table-header"
-    style="height:{$headerHeight}px"
-    bind:this={headerContainer}>
+  <div class="sg-table-header" bind:this={headerContainer}>
     {#each tableHeaders as header}
       <div
         class="sg-table-header-cell sg-table-cell {header.classes || ''}"

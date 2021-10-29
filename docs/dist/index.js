@@ -3235,7 +3235,7 @@ function create_each_block$2(ctx) {
 }
 
 function create_fragment$7(ctx) {
-	let div13;
+	let div12;
 	let t0;
 	let div8;
 	let div2;
@@ -3264,8 +3264,8 @@ function create_fragment$7(ctx) {
 	let div7_resize_listener;
 	let div8_class_value;
 	let t7;
-	let div12;
-	let div13_class_value;
+	let div11;
+	let div12_class_value;
 	let current;
 	let mounted;
 	let dispose;
@@ -3346,7 +3346,7 @@ function create_fragment$7(ctx) {
 
 	return {
 		c() {
-			div13 = element("div");
+			div12 = element("div");
 
 			for (let i = 0; i < each_blocks_5.length; i += 1) {
 				each_blocks_5[i].c();
@@ -3396,8 +3396,8 @@ function create_fragment$7(ctx) {
 			}
 
 			t7 = space();
-			div12 = element("div");
-			div12.innerHTML = `<div class="sg-table-header"><div class="sg-table-header"><div class="sg-table-header-cell sg-table-cell sg-table-header-cell-last"><span>last#</span></div></div></div>`;
+			div11 = element("div");
+			div11.innerHTML = `<div class="sg-table-header"><div class="sg-table-header-cell sg-table-cell sg-table-header-cell-last"><span>last#</span></div></div>`;
 			attr(div0, "class", "header-container svelte-1ny10s5");
 			set_style(div0, "width", /*$_width*/ ctx[23] + "px");
 			attr(div1, "class", "sg-header-scroller svelte-1ny10s5");
@@ -3415,19 +3415,19 @@ function create_fragment$7(ctx) {
 			toggle_class(div7, "zooming", /*zooming*/ ctx[14]);
 			attr(div8, "class", div8_class_value = "sg-timeline sg-view rows-count-" + /*visibleRows*/ ctx[19].length + " svelte-1ny10s5");
 			toggle_class(div8, "sg-timeline-rows-0", /*noVisibleRows*/ ctx[21]);
-			attr(div12, "class", "sg-table sg-view");
-			attr(div13, "class", div13_class_value = "sg-gantt " + /*classes*/ ctx[4] + " svelte-1ny10s5");
-			toggle_class(div13, "sg-disable-transition", !/*disableTransition*/ ctx[22]);
+			attr(div11, "class", "sg-table sg-view");
+			attr(div12, "class", div12_class_value = "sg-gantt " + /*classes*/ ctx[4] + " svelte-1ny10s5");
+			toggle_class(div12, "sg-disable-transition", !/*disableTransition*/ ctx[22]);
 		},
 		m(target, anchor) {
-			insert(target, div13, anchor);
+			insert(target, div12, anchor);
 
 			for (let i = 0; i < each_blocks_5.length; i += 1) {
-				each_blocks_5[i].m(div13, null);
+				each_blocks_5[i].m(div12, null);
 			}
 
-			append(div13, t0);
-			append(div13, div8);
+			append(div12, t0);
+			append(div12, div8);
 			append(div8, div2);
 			append(div2, div1);
 			append(div1, div0);
@@ -3474,9 +3474,9 @@ function create_fragment$7(ctx) {
 
 			/*div7_binding*/ ctx[119](div7);
 			div7_resize_listener = add_resize_listener(div7, /*div7_elementresize_handler*/ ctx[120].bind(div7));
-			append(div13, t7);
-			append(div13, div12);
-			/*div13_binding*/ ctx[121](div13);
+			append(div12, t7);
+			append(div12, div11);
+			/*div12_binding*/ ctx[121](div12);
 			current = true;
 
 			if (!mounted) {
@@ -3484,8 +3484,8 @@ function create_fragment$7(ctx) {
 					action_destroyer(ctx[42].call(null, div1)),
 					action_destroyer(ctx[41].call(null, div7)),
 					listen(div7, "wheel", /*onwheel*/ ctx[43]),
-					listen(div13, "click", onEvent),
-					listen(div13, "mouseover", onEvent)
+					listen(div12, "click", onEvent),
+					listen(div12, "mouseover", onEvent)
 				];
 
 				mounted = true;
@@ -3506,7 +3506,7 @@ function create_fragment$7(ctx) {
 						each_blocks_5[i] = create_each_block_5(child_ctx);
 						each_blocks_5[i].c();
 						transition_in(each_blocks_5[i], 1);
-						each_blocks_5[i].m(div13, t0);
+						each_blocks_5[i].m(div12, t0);
 					}
 				}
 
@@ -3618,12 +3618,12 @@ function create_fragment$7(ctx) {
 				toggle_class(div8, "sg-timeline-rows-0", /*noVisibleRows*/ ctx[21]);
 			}
 
-			if (!current || dirty[0] & /*classes*/ 16 && div13_class_value !== (div13_class_value = "sg-gantt " + /*classes*/ ctx[4] + " svelte-1ny10s5")) {
-				attr(div13, "class", div13_class_value);
+			if (!current || dirty[0] & /*classes*/ 16 && div12_class_value !== (div12_class_value = "sg-gantt " + /*classes*/ ctx[4] + " svelte-1ny10s5")) {
+				attr(div12, "class", div12_class_value);
 			}
 
 			if (dirty[0] & /*classes, disableTransition*/ 4194320) {
-				toggle_class(div13, "sg-disable-transition", !/*disableTransition*/ ctx[22]);
+				toggle_class(div12, "sg-disable-transition", !/*disableTransition*/ ctx[22]);
 			}
 		},
 		i(local) {
@@ -3695,7 +3695,7 @@ function create_fragment$7(ctx) {
 			current = false;
 		},
 		d(detaching) {
-			if (detaching) detach(div13);
+			if (detaching) detach(div12);
 			destroy_each(each_blocks_5, detaching);
 			destroy_component(columnheader);
 
@@ -3724,7 +3724,7 @@ function create_fragment$7(ctx) {
 			destroy_each(each_blocks, detaching);
 			/*div7_binding*/ ctx[119](null);
 			div7_resize_listener();
-			/*div13_binding*/ ctx[121](null);
+			/*div12_binding*/ ctx[121](null);
 			mounted = false;
 			run_all(dispose);
 		}
@@ -4302,7 +4302,7 @@ function instance$7($$self, $$props, $$invalidate) {
 		visibleWidth.set($visibleWidth);
 	}
 
-	function div13_binding($$value) {
+	function div12_binding($$value) {
 		binding_callbacks[$$value ? "unshift" : "push"](() => {
 			$$invalidate(9, ganttElement = $$value);
 		});
@@ -4588,7 +4588,7 @@ function instance$7($$self, $$props, $$invalidate) {
 		div4_binding,
 		div7_binding,
 		div7_elementresize_handler,
-		div13_binding
+		div12_binding
 	];
 }
 
@@ -5590,19 +5590,19 @@ class TableRow extends SvelteComponent {
 
 function get_each_context$4(ctx, list, i) {
 	const child_ctx = ctx.slice();
-	child_ctx[30] = list[i];
+	child_ctx[29] = list[i];
 	return child_ctx;
 }
 
 function get_each_context_1$1(ctx, list, i) {
 	const child_ctx = ctx.slice();
-	child_ctx[33] = list[i];
+	child_ctx[32] = list[i];
 	return child_ctx;
 }
 
-// (188:8) {:else}
+// (185:8) {:else}
 function create_else_block$3(ctx) {
-	let t_value = /*header*/ ctx[33].title + "";
+	let t_value = /*header*/ ctx[32].title + "";
 	let t;
 
 	return {
@@ -5613,7 +5613,7 @@ function create_else_block$3(ctx) {
 			insert(target, t, anchor);
 		},
 		p(ctx, dirty) {
-			if (dirty[0] & /*tableHeaders*/ 32 && t_value !== (t_value = /*header*/ ctx[33].title + "")) set_data(t, t_value);
+			if (dirty[0] & /*tableHeaders*/ 32 && t_value !== (t_value = /*header*/ ctx[32].title + "")) set_data(t, t_value);
 		},
 		d(detaching) {
 			if (detaching) detach(t);
@@ -5621,10 +5621,10 @@ function create_else_block$3(ctx) {
 	};
 }
 
-// (186:8) {#if header.headerHtml}
+// (183:8) {#if header.headerHtml}
 function create_if_block$4(ctx) {
 	let html_tag;
-	let raw_value = /*header*/ ctx[33].headerHtml + "";
+	let raw_value = /*header*/ ctx[32].headerHtml + "";
 
 	return {
 		c() {
@@ -5634,7 +5634,7 @@ function create_if_block$4(ctx) {
 			html_tag.m(raw_value, target, anchor);
 		},
 		p(ctx, dirty) {
-			if (dirty[0] & /*tableHeaders*/ 32 && raw_value !== (raw_value = /*header*/ ctx[33].headerHtml + "")) html_tag.p(raw_value);
+			if (dirty[0] & /*tableHeaders*/ 32 && raw_value !== (raw_value = /*header*/ ctx[32].headerHtml + "")) html_tag.p(raw_value);
 		},
 		d(detaching) {
 			if (detaching) html_tag.d();
@@ -5642,14 +5642,14 @@ function create_if_block$4(ctx) {
 	};
 }
 
-// (182:4) {#each tableHeaders as header}
+// (179:4) {#each tableHeaders as header}
 function create_each_block_1$1(ctx) {
 	let div;
 	let t;
 	let div_class_value;
 
 	function select_block_type(ctx, dirty) {
-		if (/*header*/ ctx[33].headerHtml) return create_if_block$4;
+		if (/*header*/ ctx[32].headerHtml) return create_if_block$4;
 		return create_else_block$3;
 	}
 
@@ -5661,8 +5661,8 @@ function create_each_block_1$1(ctx) {
 			div = element("div");
 			if_block.c();
 			t = space();
-			attr(div, "class", div_class_value = "sg-table-header-cell sg-table-cell " + (/*header*/ ctx[33].classes || "") + " svelte-1xkjnu7");
-			set_style(div, "width", /*header*/ ctx[33].width + "px");
+			attr(div, "class", div_class_value = "sg-table-header-cell sg-table-cell " + (/*header*/ ctx[32].classes || "") + " svelte-1xkjnu7");
+			set_style(div, "width", /*header*/ ctx[32].width + "px");
 		},
 		m(target, anchor) {
 			insert(target, div, anchor);
@@ -5682,12 +5682,12 @@ function create_each_block_1$1(ctx) {
 				}
 			}
 
-			if (dirty[0] & /*tableHeaders*/ 32 && div_class_value !== (div_class_value = "sg-table-header-cell sg-table-cell " + (/*header*/ ctx[33].classes || "") + " svelte-1xkjnu7")) {
+			if (dirty[0] & /*tableHeaders*/ 32 && div_class_value !== (div_class_value = "sg-table-header-cell sg-table-cell " + (/*header*/ ctx[32].classes || "") + " svelte-1xkjnu7")) {
 				attr(div, "class", div_class_value);
 			}
 
 			if (dirty[0] & /*tableHeaders*/ 32) {
-				set_style(div, "width", /*header*/ ctx[33].width + "px");
+				set_style(div, "width", /*header*/ ctx[32].width + "px");
 			}
 		},
 		d(detaching) {
@@ -5697,19 +5697,19 @@ function create_each_block_1$1(ctx) {
 	};
 }
 
-// (200:8) {#each visibleRows as row}
+// (197:8) {#each visibleRows as row}
 function create_each_block$4(ctx) {
 	let current;
 
 	const tablerow = new TableRow({
 			props: {
-				row: /*row*/ ctx[30],
+				row: /*row*/ ctx[29],
 				headers: /*tableHeaders*/ ctx[5]
 			}
 		});
 
-	tablerow.$on("rowExpanded", /*onRowExpanded*/ ctx[15]);
-	tablerow.$on("rowCollapsed", /*onRowCollapsed*/ ctx[16]);
+	tablerow.$on("rowExpanded", /*onRowExpanded*/ ctx[13]);
+	tablerow.$on("rowCollapsed", /*onRowCollapsed*/ ctx[14]);
 
 	return {
 		c() {
@@ -5721,7 +5721,7 @@ function create_each_block$4(ctx) {
 		},
 		p(ctx, dirty) {
 			const tablerow_changes = {};
-			if (dirty[0] & /*visibleRows*/ 16) tablerow_changes.row = /*row*/ ctx[30];
+			if (dirty[0] & /*visibleRows*/ 16) tablerow_changes.row = /*row*/ ctx[29];
 			if (dirty[0] & /*tableHeaders*/ 32) tablerow_changes.headers = /*tableHeaders*/ ctx[5];
 			tablerow.$set(tablerow_changes);
 		},
@@ -5787,7 +5787,6 @@ function create_fragment$a(ctx) {
 			}
 
 			attr(div0, "class", "sg-table-header svelte-1xkjnu7");
-			set_style(div0, "height", /*$headerHeight*/ ctx[8] + "px");
 			attr(div1, "class", "sg-table-rows svelte-1xkjnu7");
 			set_style(div1, "padding-top", /*paddingTop*/ ctx[1] + "px");
 			set_style(div1, "padding-bottom", /*paddingBottom*/ ctx[2] + "px");
@@ -5806,7 +5805,7 @@ function create_fragment$a(ctx) {
 				each_blocks_1[i].m(div0, null);
 			}
 
-			/*div0_binding*/ ctx[29](div0);
+			/*div0_binding*/ ctx[28](div0);
 			append(div4, t);
 			append(div4, div3);
 			append(div3, div2);
@@ -5819,7 +5818,7 @@ function create_fragment$a(ctx) {
 			current = true;
 
 			if (!mounted) {
-				dispose = action_destroyer(ctx[14].call(null, div2));
+				dispose = action_destroyer(ctx[12].call(null, div2));
 				mounted = true;
 			}
 		},
@@ -5847,11 +5846,7 @@ function create_fragment$a(ctx) {
 				each_blocks_1.length = each_value_1.length;
 			}
 
-			if (!current || dirty[0] & /*$headerHeight*/ 256) {
-				set_style(div0, "height", /*$headerHeight*/ ctx[8] + "px");
-			}
-
-			if (dirty[0] & /*visibleRows, tableHeaders, onRowExpanded, onRowCollapsed*/ 98352) {
+			if (dirty[0] & /*visibleRows, tableHeaders, onRowExpanded, onRowCollapsed*/ 24624) {
 				each_value = /*visibleRows*/ ctx[4];
 				let i;
 
@@ -5919,7 +5914,7 @@ function create_fragment$a(ctx) {
 		d(detaching) {
 			if (detaching) detach(div4);
 			destroy_each(each_blocks_1, detaching);
-			/*div0_binding*/ ctx[29](null);
+			/*div0_binding*/ ctx[28](null);
 			destroy_each(each_blocks, detaching);
 			mounted = false;
 			dispose();
@@ -5948,9 +5943,8 @@ function instance$a($$self, $$props, $$invalidate) {
 	let $rowPadding;
 	let $width;
 	let $visibleWidth;
-	let $headerHeight;
-	component_subscribe($$self, rowStore, $$value => $$invalidate(18, $rowStore = $$value));
-	component_subscribe($$self, taskStore, $$value => $$invalidate(20, $taskStore = $$value));
+	component_subscribe($$self, rowStore, $$value => $$invalidate(16, $rowStore = $$value));
+	component_subscribe($$self, taskStore, $$value => $$invalidate(18, $taskStore = $$value));
 	const dispatch = createEventDispatcher();
 	let { tableWidth } = $$props;
 	let { paddingTop } = $$props;
@@ -5969,12 +5963,11 @@ function instance$a($$self, $$props, $$invalidate) {
 	] } = $$props;
 
 	const { from, to, width, visibleWidth, headerHeight } = getContext("dimensions");
-	component_subscribe($$self, width, value => $$invalidate(22, $width = value));
-	component_subscribe($$self, visibleWidth, value => $$invalidate(23, $visibleWidth = value));
-	component_subscribe($$self, headerHeight, value => $$invalidate(8, $headerHeight = value));
+	component_subscribe($$self, width, value => $$invalidate(20, $width = value));
+	component_subscribe($$self, visibleWidth, value => $$invalidate(21, $visibleWidth = value));
 	const { rowPadding, rowHeight } = getContext("options");
-	component_subscribe($$self, rowPadding, value => $$invalidate(21, $rowPadding = value));
-	component_subscribe($$self, rowHeight, value => $$invalidate(19, $rowHeight = value));
+	component_subscribe($$self, rowPadding, value => $$invalidate(19, $rowPadding = value));
+	component_subscribe($$self, rowHeight, value => $$invalidate(17, $rowHeight = value));
 
 	onMount(() => {
 		dispatch("init", { module: this });
@@ -6059,11 +6052,11 @@ function instance$a($$self, $$props, $$invalidate) {
 					sum += header.width;
 				});
 
-				$$invalidate(17, scrollWidth = sum);
+				$$invalidate(15, scrollWidth = sum);
 			}
 		}
 
-		if ($$self.$$.dirty[0] & /*$width, $visibleWidth, scrollWidth, tableWidth*/ 12713985) {
+		if ($$self.$$.dirty[0] & /*$width, $visibleWidth, scrollWidth, tableWidth*/ 3178497) {
 			 {
 				$$invalidate(7, bottomScrollbarVisible = $width > $visibleWidth && scrollWidth <= tableWidth);
 			}
@@ -6079,10 +6072,8 @@ function instance$a($$self, $$props, $$invalidate) {
 		tableHeaders,
 		headerContainer,
 		bottomScrollbarVisible,
-		$headerHeight,
 		width,
 		visibleWidth,
-		headerHeight,
 		rowPadding,
 		rowHeight,
 		scrollListener,
@@ -6098,6 +6089,7 @@ function instance$a($$self, $$props, $$invalidate) {
 		dispatch,
 		from,
 		to,
+		headerHeight,
 		scrollables,
 		updateYPositions,
 		div0_binding
