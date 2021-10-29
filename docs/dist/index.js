@@ -5613,25 +5613,19 @@ class TableRow extends SvelteComponent {
 
 function get_each_context$4(ctx, list, i) {
 	const child_ctx = ctx.slice();
-	child_ctx[31] = list[i];
+	child_ctx[29] = list[i];
 	return child_ctx;
 }
 
 function get_each_context_1$1(ctx, list, i) {
 	const child_ctx = ctx.slice();
-	child_ctx[34] = list[i];
+	child_ctx[32] = list[i];
 	return child_ctx;
 }
 
-function get_each_context_2$1(ctx, list, i) {
-	const child_ctx = ctx.slice();
-	child_ctx[31] = list[i];
-	return child_ctx;
-}
-
-// (194:8) {:else}
-function create_else_block_1$1(ctx) {
-	let t_value = /*header*/ ctx[31].title + "";
+// (185:8) {:else}
+function create_else_block$3(ctx) {
+	let t_value = /*header*/ ctx[32].title + "";
 	let t;
 
 	return {
@@ -5642,7 +5636,7 @@ function create_else_block_1$1(ctx) {
 			insert(target, t, anchor);
 		},
 		p(ctx, dirty) {
-			if (dirty[0] & /*tableHeaders*/ 32 && t_value !== (t_value = /*header*/ ctx[31].title + "")) set_data(t, t_value);
+			if (dirty[0] & /*tableHeaders*/ 32 && t_value !== (t_value = /*header*/ ctx[32].title + "")) set_data(t, t_value);
 		},
 		d(detaching) {
 			if (detaching) detach(t);
@@ -5650,10 +5644,10 @@ function create_else_block_1$1(ctx) {
 	};
 }
 
-// (192:8) {#if header.headerHtml}
-function create_if_block_1$3(ctx) {
+// (183:8) {#if header.headerHtml}
+function create_if_block$4(ctx) {
 	let html_tag;
-	let raw_value = /*header*/ ctx[31].headerHtml + "";
+	let raw_value = /*header*/ ctx[32].headerHtml + "";
 
 	return {
 		c() {
@@ -5663,7 +5657,7 @@ function create_if_block_1$3(ctx) {
 			html_tag.m(raw_value, target, anchor);
 		},
 		p(ctx, dirty) {
-			if (dirty[0] & /*tableHeaders*/ 32 && raw_value !== (raw_value = /*header*/ ctx[31].headerHtml + "")) html_tag.p(raw_value);
+			if (dirty[0] & /*tableHeaders*/ 32 && raw_value !== (raw_value = /*header*/ ctx[32].headerHtml + "")) html_tag.p(raw_value);
 		},
 		d(detaching) {
 			if (detaching) html_tag.d();
@@ -5671,15 +5665,15 @@ function create_if_block_1$3(ctx) {
 	};
 }
 
-// (188:4) {#each tableHeaders as header}
-function create_each_block_2$1(ctx) {
+// (179:4) {#each tableHeaders as header}
+function create_each_block_1$1(ctx) {
 	let div;
 	let t;
 	let div_class_value;
 
 	function select_block_type(ctx, dirty) {
-		if (/*header*/ ctx[31].headerHtml) return create_if_block_1$3;
-		return create_else_block_1$1;
+		if (/*header*/ ctx[32].headerHtml) return create_if_block$4;
+		return create_else_block$3;
 	}
 
 	let current_block_type = select_block_type(ctx);
@@ -5690,8 +5684,8 @@ function create_each_block_2$1(ctx) {
 			div = element("div");
 			if_block.c();
 			t = space();
-			attr(div, "class", div_class_value = "sg-table-header-cell sg-table-cell " + (/*header*/ ctx[31].classes || "") + " svelte-1xkjnu7");
-			set_style(div, "width", /*header*/ ctx[31].width + "px");
+			attr(div, "class", div_class_value = "sg-table-header-cell sg-table-cell " + (/*header*/ ctx[32].classes || "") + " svelte-1xkjnu7");
+			set_style(div, "width", /*header*/ ctx[32].width + "px");
 		},
 		m(target, anchor) {
 			insert(target, div, anchor);
@@ -5711,12 +5705,12 @@ function create_each_block_2$1(ctx) {
 				}
 			}
 
-			if (dirty[0] & /*tableHeaders*/ 32 && div_class_value !== (div_class_value = "sg-table-header-cell sg-table-cell " + (/*header*/ ctx[31].classes || "") + " svelte-1xkjnu7")) {
+			if (dirty[0] & /*tableHeaders*/ 32 && div_class_value !== (div_class_value = "sg-table-header-cell sg-table-cell " + (/*header*/ ctx[32].classes || "") + " svelte-1xkjnu7")) {
 				attr(div, "class", div_class_value);
 			}
 
 			if (dirty[0] & /*tableHeaders*/ 32) {
-				set_style(div, "width", /*header*/ ctx[31].width + "px");
+				set_style(div, "width", /*header*/ ctx[32].width + "px");
 			}
 		},
 		d(detaching) {
@@ -5726,19 +5720,19 @@ function create_each_block_2$1(ctx) {
 	};
 }
 
-// (206:8) {#each visibleRows as row}
-function create_each_block_1$1(ctx) {
+// (197:8) {#each visibleRows as row}
+function create_each_block$4(ctx) {
 	let current;
 
 	const tablerow = new TableRow({
 			props: {
-				row: /*row*/ ctx[34],
+				row: /*row*/ ctx[29],
 				headers: /*tableHeaders*/ ctx[5]
 			}
 		});
 
-	tablerow.$on("rowExpanded", /*onRowExpanded*/ ctx[14]);
-	tablerow.$on("rowCollapsed", /*onRowCollapsed*/ ctx[15]);
+	tablerow.$on("rowExpanded", /*onRowExpanded*/ ctx[13]);
+	tablerow.$on("rowCollapsed", /*onRowCollapsed*/ ctx[14]);
 
 	return {
 		c() {
@@ -5750,7 +5744,7 @@ function create_each_block_1$1(ctx) {
 		},
 		p(ctx, dirty) {
 			const tablerow_changes = {};
-			if (dirty[0] & /*visibleRows*/ 16) tablerow_changes.row = /*row*/ ctx[34];
+			if (dirty[0] & /*visibleRows*/ 16) tablerow_changes.row = /*row*/ ctx[29];
 			if (dirty[0] & /*tableHeaders*/ 32) tablerow_changes.headers = /*tableHeaders*/ ctx[5];
 			tablerow.$set(tablerow_changes);
 		},
@@ -5769,160 +5763,47 @@ function create_each_block_1$1(ctx) {
 	};
 }
 
-// (224:8) {:else}
-function create_else_block$3(ctx) {
-	let t_value = /*header*/ ctx[31].title + "";
-	let t;
-
-	return {
-		c() {
-			t = text(t_value);
-		},
-		m(target, anchor) {
-			insert(target, t, anchor);
-		},
-		p(ctx, dirty) {
-			if (dirty[0] & /*tableLastHeaders*/ 64 && t_value !== (t_value = /*header*/ ctx[31].title + "")) set_data(t, t_value);
-		},
-		d(detaching) {
-			if (detaching) detach(t);
-		}
-	};
-}
-
-// (222:8) {#if header.headerHtml}
-function create_if_block$4(ctx) {
-	let html_tag;
-	let raw_value = /*header*/ ctx[31].headerHtml + "";
-
-	return {
-		c() {
-			html_tag = new HtmlTag(null);
-		},
-		m(target, anchor) {
-			html_tag.m(raw_value, target, anchor);
-		},
-		p(ctx, dirty) {
-			if (dirty[0] & /*tableLastHeaders*/ 64 && raw_value !== (raw_value = /*header*/ ctx[31].headerHtml + "")) html_tag.p(raw_value);
-		},
-		d(detaching) {
-			if (detaching) html_tag.d();
-		}
-	};
-}
-
-// (218:4) {#each tableLastHeaders as header}
-function create_each_block$4(ctx) {
-	let div;
-	let t;
-	let div_class_value;
-
-	function select_block_type_1(ctx, dirty) {
-		if (/*header*/ ctx[31].headerHtml) return create_if_block$4;
-		return create_else_block$3;
-	}
-
-	let current_block_type = select_block_type_1(ctx);
-	let if_block = current_block_type(ctx);
-
-	return {
-		c() {
-			div = element("div");
-			if_block.c();
-			t = space();
-			attr(div, "class", div_class_value = "sg-table-header-cell sg-table-cell " + (/*header*/ ctx[31].classes || "") + " svelte-1xkjnu7");
-			set_style(div, "width", /*header*/ ctx[31].width + "px");
-		},
-		m(target, anchor) {
-			insert(target, div, anchor);
-			if_block.m(div, null);
-			append(div, t);
-		},
-		p(ctx, dirty) {
-			if (current_block_type === (current_block_type = select_block_type_1(ctx)) && if_block) {
-				if_block.p(ctx, dirty);
-			} else {
-				if_block.d(1);
-				if_block = current_block_type(ctx);
-
-				if (if_block) {
-					if_block.c();
-					if_block.m(div, t);
-				}
-			}
-
-			if (dirty[0] & /*tableLastHeaders*/ 64 && div_class_value !== (div_class_value = "sg-table-header-cell sg-table-cell " + (/*header*/ ctx[31].classes || "") + " svelte-1xkjnu7")) {
-				attr(div, "class", div_class_value);
-			}
-
-			if (dirty[0] & /*tableLastHeaders*/ 64) {
-				set_style(div, "width", /*header*/ ctx[31].width + "px");
-			}
-		},
-		d(detaching) {
-			if (detaching) detach(div);
-			if_block.d();
-		}
-	};
-}
-
 function create_fragment$a(ctx) {
-	let div5;
+	let div4;
 	let div0;
-	let t0;
+	let t;
 	let div3;
 	let div2;
 	let div1;
-	let t1;
-	let div4;
 	let current;
 	let mounted;
 	let dispose;
-	let each_value_2 = /*tableHeaders*/ ctx[5];
-	let each_blocks_2 = [];
-
-	for (let i = 0; i < each_value_2.length; i += 1) {
-		each_blocks_2[i] = create_each_block_2$1(get_each_context_2$1(ctx, each_value_2, i));
-	}
-
-	let each_value_1 = /*visibleRows*/ ctx[4];
+	let each_value_1 = /*tableHeaders*/ ctx[5];
 	let each_blocks_1 = [];
 
 	for (let i = 0; i < each_value_1.length; i += 1) {
 		each_blocks_1[i] = create_each_block_1$1(get_each_context_1$1(ctx, each_value_1, i));
 	}
 
-	const out = i => transition_out(each_blocks_1[i], 1, 1, () => {
-		each_blocks_1[i] = null;
-	});
-
-	let each_value = /*tableLastHeaders*/ ctx[6];
+	let each_value = /*visibleRows*/ ctx[4];
 	let each_blocks = [];
 
 	for (let i = 0; i < each_value.length; i += 1) {
 		each_blocks[i] = create_each_block$4(get_each_context$4(ctx, each_value, i));
 	}
 
+	const out = i => transition_out(each_blocks[i], 1, 1, () => {
+		each_blocks[i] = null;
+	});
+
 	return {
 		c() {
-			div5 = element("div");
+			div4 = element("div");
 			div0 = element("div");
-
-			for (let i = 0; i < each_blocks_2.length; i += 1) {
-				each_blocks_2[i].c();
-			}
-
-			t0 = space();
-			div3 = element("div");
-			div2 = element("div");
-			div1 = element("div");
 
 			for (let i = 0; i < each_blocks_1.length; i += 1) {
 				each_blocks_1[i].c();
 			}
 
-			t1 = space();
-			div4 = element("div");
+			t = space();
+			div3 = element("div");
+			div2 = element("div");
+			div1 = element("div");
 
 			for (let i = 0; i < each_blocks.length; i += 1) {
 				each_blocks[i].c();
@@ -5935,70 +5816,38 @@ function create_fragment$a(ctx) {
 			set_style(div1, "height", /*rowContainerHeight*/ ctx[3] + "px");
 			attr(div2, "class", "sg-table-scroller svelte-1xkjnu7");
 			attr(div3, "class", "sg-table-body svelte-1xkjnu7");
-			toggle_class(div3, "bottom-scrollbar-visible", /*bottomScrollbarVisible*/ ctx[8]);
-			attr(div4, "class", "sg-table-header svelte-1xkjnu7");
-			attr(div5, "class", "sg-table sg-view svelte-1xkjnu7");
-			set_style(div5, "width", /*tableWidth*/ ctx[0] + "px");
+			toggle_class(div3, "bottom-scrollbar-visible", /*bottomScrollbarVisible*/ ctx[7]);
+			attr(div4, "class", "sg-table sg-view svelte-1xkjnu7");
+			set_style(div4, "width", /*tableWidth*/ ctx[0] + "px");
 		},
 		m(target, anchor) {
-			insert(target, div5, anchor);
-			append(div5, div0);
+			insert(target, div4, anchor);
+			append(div4, div0);
 
-			for (let i = 0; i < each_blocks_2.length; i += 1) {
-				each_blocks_2[i].m(div0, null);
+			for (let i = 0; i < each_blocks_1.length; i += 1) {
+				each_blocks_1[i].m(div0, null);
 			}
 
-			/*div0_binding*/ ctx[29](div0);
-			append(div5, t0);
-			append(div5, div3);
+			/*div0_binding*/ ctx[28](div0);
+			append(div4, t);
+			append(div4, div3);
 			append(div3, div2);
 			append(div2, div1);
 
-			for (let i = 0; i < each_blocks_1.length; i += 1) {
-				each_blocks_1[i].m(div1, null);
-			}
-
-			append(div5, t1);
-			append(div5, div4);
-
 			for (let i = 0; i < each_blocks.length; i += 1) {
-				each_blocks[i].m(div4, null);
+				each_blocks[i].m(div1, null);
 			}
 
-			/*div4_binding*/ ctx[30](div4);
 			current = true;
 
 			if (!mounted) {
-				dispose = action_destroyer(ctx[13].call(null, div2));
+				dispose = action_destroyer(ctx[12].call(null, div2));
 				mounted = true;
 			}
 		},
 		p(ctx, dirty) {
 			if (dirty[0] & /*tableHeaders*/ 32) {
-				each_value_2 = /*tableHeaders*/ ctx[5];
-				let i;
-
-				for (i = 0; i < each_value_2.length; i += 1) {
-					const child_ctx = get_each_context_2$1(ctx, each_value_2, i);
-
-					if (each_blocks_2[i]) {
-						each_blocks_2[i].p(child_ctx, dirty);
-					} else {
-						each_blocks_2[i] = create_each_block_2$1(child_ctx);
-						each_blocks_2[i].c();
-						each_blocks_2[i].m(div0, null);
-					}
-				}
-
-				for (; i < each_blocks_2.length; i += 1) {
-					each_blocks_2[i].d(1);
-				}
-
-				each_blocks_2.length = each_value_2.length;
-			}
-
-			if (dirty[0] & /*visibleRows, tableHeaders, onRowExpanded, onRowCollapsed*/ 49200) {
-				each_value_1 = /*visibleRows*/ ctx[4];
+				each_value_1 = /*tableHeaders*/ ctx[5];
 				let i;
 
 				for (i = 0; i < each_value_1.length; i += 1) {
@@ -6006,18 +5855,41 @@ function create_fragment$a(ctx) {
 
 					if (each_blocks_1[i]) {
 						each_blocks_1[i].p(child_ctx, dirty);
-						transition_in(each_blocks_1[i], 1);
 					} else {
 						each_blocks_1[i] = create_each_block_1$1(child_ctx);
 						each_blocks_1[i].c();
-						transition_in(each_blocks_1[i], 1);
-						each_blocks_1[i].m(div1, null);
+						each_blocks_1[i].m(div0, null);
+					}
+				}
+
+				for (; i < each_blocks_1.length; i += 1) {
+					each_blocks_1[i].d(1);
+				}
+
+				each_blocks_1.length = each_value_1.length;
+			}
+
+			if (dirty[0] & /*visibleRows, tableHeaders, onRowExpanded, onRowCollapsed*/ 24624) {
+				each_value = /*visibleRows*/ ctx[4];
+				let i;
+
+				for (i = 0; i < each_value.length; i += 1) {
+					const child_ctx = get_each_context$4(ctx, each_value, i);
+
+					if (each_blocks[i]) {
+						each_blocks[i].p(child_ctx, dirty);
+						transition_in(each_blocks[i], 1);
+					} else {
+						each_blocks[i] = create_each_block$4(child_ctx);
+						each_blocks[i].c();
+						transition_in(each_blocks[i], 1);
+						each_blocks[i].m(div1, null);
 					}
 				}
 
 				group_outros();
 
-				for (i = each_value_1.length; i < each_blocks_1.length; i += 1) {
+				for (i = each_value.length; i < each_blocks.length; i += 1) {
 					out(i);
 				}
 
@@ -6036,62 +5908,37 @@ function create_fragment$a(ctx) {
 				set_style(div1, "height", /*rowContainerHeight*/ ctx[3] + "px");
 			}
 
-			if (dirty[0] & /*bottomScrollbarVisible*/ 256) {
-				toggle_class(div3, "bottom-scrollbar-visible", /*bottomScrollbarVisible*/ ctx[8]);
-			}
-
-			if (dirty[0] & /*tableLastHeaders*/ 64) {
-				each_value = /*tableLastHeaders*/ ctx[6];
-				let i;
-
-				for (i = 0; i < each_value.length; i += 1) {
-					const child_ctx = get_each_context$4(ctx, each_value, i);
-
-					if (each_blocks[i]) {
-						each_blocks[i].p(child_ctx, dirty);
-					} else {
-						each_blocks[i] = create_each_block$4(child_ctx);
-						each_blocks[i].c();
-						each_blocks[i].m(div4, null);
-					}
-				}
-
-				for (; i < each_blocks.length; i += 1) {
-					each_blocks[i].d(1);
-				}
-
-				each_blocks.length = each_value.length;
+			if (dirty[0] & /*bottomScrollbarVisible*/ 128) {
+				toggle_class(div3, "bottom-scrollbar-visible", /*bottomScrollbarVisible*/ ctx[7]);
 			}
 
 			if (!current || dirty[0] & /*tableWidth*/ 1) {
-				set_style(div5, "width", /*tableWidth*/ ctx[0] + "px");
+				set_style(div4, "width", /*tableWidth*/ ctx[0] + "px");
 			}
 		},
 		i(local) {
 			if (current) return;
 
-			for (let i = 0; i < each_value_1.length; i += 1) {
-				transition_in(each_blocks_1[i]);
+			for (let i = 0; i < each_value.length; i += 1) {
+				transition_in(each_blocks[i]);
 			}
 
 			current = true;
 		},
 		o(local) {
-			each_blocks_1 = each_blocks_1.filter(Boolean);
+			each_blocks = each_blocks.filter(Boolean);
 
-			for (let i = 0; i < each_blocks_1.length; i += 1) {
-				transition_out(each_blocks_1[i]);
+			for (let i = 0; i < each_blocks.length; i += 1) {
+				transition_out(each_blocks[i]);
 			}
 
 			current = false;
 		},
 		d(detaching) {
-			if (detaching) detach(div5);
-			destroy_each(each_blocks_2, detaching);
-			/*div0_binding*/ ctx[29](null);
+			if (detaching) detach(div4);
 			destroy_each(each_blocks_1, detaching);
+			/*div0_binding*/ ctx[28](null);
 			destroy_each(each_blocks, detaching);
-			/*div4_binding*/ ctx[30](null);
 			mounted = false;
 			dispose();
 		}
@@ -6119,8 +5966,8 @@ function instance$a($$self, $$props, $$invalidate) {
 	let $rowPadding;
 	let $width;
 	let $visibleWidth;
-	component_subscribe($$self, rowStore, $$value => $$invalidate(17, $rowStore = $$value));
-	component_subscribe($$self, taskStore, $$value => $$invalidate(19, $taskStore = $$value));
+	component_subscribe($$self, rowStore, $$value => $$invalidate(16, $rowStore = $$value));
+	component_subscribe($$self, taskStore, $$value => $$invalidate(18, $taskStore = $$value));
 	const dispatch = createEventDispatcher();
 	let { tableWidth } = $$props;
 	let { paddingTop } = $$props;
@@ -6138,22 +5985,12 @@ function instance$a($$self, $$props, $$invalidate) {
 		}
 	] } = $$props;
 
-	let { tableLastHeaders = [
-		{
-			title: "Name",
-			property: "label",
-			width: 100,
-			classes: "",
-			headerHtml: ""
-		}
-	] } = $$props;
-
 	const { from, to, width, visibleWidth, headerHeight } = getContext("dimensions");
-	component_subscribe($$self, width, value => $$invalidate(21, $width = value));
-	component_subscribe($$self, visibleWidth, value => $$invalidate(22, $visibleWidth = value));
+	component_subscribe($$self, width, value => $$invalidate(20, $width = value));
+	component_subscribe($$self, visibleWidth, value => $$invalidate(21, $visibleWidth = value));
 	const { rowPadding, rowHeight } = getContext("options");
-	component_subscribe($$self, rowPadding, value => $$invalidate(20, $rowPadding = value));
-	component_subscribe($$self, rowHeight, value => $$invalidate(18, $rowHeight = value));
+	component_subscribe($$self, rowPadding, value => $$invalidate(19, $rowPadding = value));
+	component_subscribe($$self, rowHeight, value => $$invalidate(17, $rowHeight = value));
 
 	onMount(() => {
 		dispatch("init", { module: this });
@@ -6166,7 +6003,7 @@ function instance$a($$self, $$props, $$invalidate) {
 		scrollables.push({ node, orientation: "vertical" });
 
 		node.addEventListener("scroll", event => {
-			$$invalidate(7, headerContainer.scrollLeft = node.scrollLeft, headerContainer);
+			$$invalidate(6, headerContainer.scrollLeft = node.scrollLeft, headerContainer);
 		});
 
 		return {
@@ -6216,13 +6053,7 @@ function instance$a($$self, $$props, $$invalidate) {
 
 	function div0_binding($$value) {
 		binding_callbacks[$$value ? "unshift" : "push"](() => {
-			$$invalidate(7, headerContainer = $$value);
-		});
-	}
-
-	function div4_binding($$value) {
-		binding_callbacks[$$value ? "unshift" : "push"](() => {
-			$$invalidate(7, headerContainer = $$value);
+			$$invalidate(6, headerContainer = $$value);
 		});
 	}
 
@@ -6233,7 +6064,6 @@ function instance$a($$self, $$props, $$invalidate) {
 		if ("rowContainerHeight" in $$props) $$invalidate(3, rowContainerHeight = $$props.rowContainerHeight);
 		if ("visibleRows" in $$props) $$invalidate(4, visibleRows = $$props.visibleRows);
 		if ("tableHeaders" in $$props) $$invalidate(5, tableHeaders = $$props.tableHeaders);
-		if ("tableLastHeaders" in $$props) $$invalidate(6, tableLastHeaders = $$props.tableLastHeaders);
 	};
 
 	$$self.$$.update = () => {
@@ -6245,13 +6075,13 @@ function instance$a($$self, $$props, $$invalidate) {
 					sum += header.width;
 				});
 
-				$$invalidate(16, scrollWidth = sum);
+				$$invalidate(15, scrollWidth = sum);
 			}
 		}
 
-		if ($$self.$$.dirty[0] & /*$width, $visibleWidth, scrollWidth, tableWidth*/ 6356993) {
+		if ($$self.$$.dirty[0] & /*$width, $visibleWidth, scrollWidth, tableWidth*/ 3178497) {
 			 {
-				$$invalidate(8, bottomScrollbarVisible = $width > $visibleWidth && scrollWidth <= tableWidth);
+				$$invalidate(7, bottomScrollbarVisible = $width > $visibleWidth && scrollWidth <= tableWidth);
 			}
 		}
 	};
@@ -6263,7 +6093,6 @@ function instance$a($$self, $$props, $$invalidate) {
 		rowContainerHeight,
 		visibleRows,
 		tableHeaders,
-		tableLastHeaders,
 		headerContainer,
 		bottomScrollbarVisible,
 		width,
@@ -6286,8 +6115,7 @@ function instance$a($$self, $$props, $$invalidate) {
 		headerHeight,
 		scrollables,
 		updateYPositions,
-		div0_binding,
-		div4_binding
+		div0_binding
 	];
 }
 
@@ -6307,8 +6135,7 @@ class Table extends SvelteComponent {
 				paddingBottom: 2,
 				rowContainerHeight: 3,
 				visibleRows: 4,
-				tableHeaders: 5,
-				tableLastHeaders: 6
+				tableHeaders: 5
 			},
 			[-1, -1]
 		);

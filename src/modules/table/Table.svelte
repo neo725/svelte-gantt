@@ -29,15 +29,6 @@
       headerHtml: '',
     },
   ]
-  export let tableLastHeaders = [
-    {
-      title: 'Name',
-      property: 'label',
-      width: 100,
-      classes: '',
-      headerHtml: '',
-    },
-  ]
 
   const { from, to, width, visibleWidth, headerHeight } = getContext(
     'dimensions',
@@ -212,17 +203,5 @@
         {/each}
       </div>
     </div>
-  </div>
-
-  <div class="sg-table-header" bind:this={headerContainer}>
-    {#each tableLastHeaders as header}
-      <div
-        class="sg-table-header-cell sg-table-cell {header.classes || ''}"
-        style="width:{header.width}px">
-        {#if header.headerHtml}
-          {@html header.headerHtml}
-        {:else}{header.title}{/if}
-      </div>
-    {/each}
   </div>
 </div>
