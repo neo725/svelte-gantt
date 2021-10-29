@@ -20,7 +20,9 @@
   // title: label to display in the header
   // property: property of row to display in the cell
   // width: width of column
-  export let tableHeaders = [{ title: 'Name', property: 'label', width: 100 }]
+  export let tableHeaders = [
+    { title: 'Name', property: 'label', width: 100, classes: '' },
+  ]
 
   const { from, to, width, visibleWidth, headerHeight } = getContext(
     'dimensions',
@@ -172,17 +174,11 @@
     style="height:{$headerHeight}px"
     bind:this={headerContainer}>
     {#each tableHeaders as header}
-      {#if header.index == 0}
-        <div class="sg-table-header-cell sg-table-cell sg-table-cell-0">
-          <span>123</span>
-        </div>
-      {:else}
-        <div
-          class="sg-table-header-cell sg-table-cell"
-          style="width:{header.width}px">
-          {header.title}
-        </div>
-      {/if}
+      <div
+        class="sg-table-header-cell sg-table-cell {header.classes || ''}"
+        style="width:{header.width}px">
+        {header.title}
+      </div>
     {/each}
   </div>
 
