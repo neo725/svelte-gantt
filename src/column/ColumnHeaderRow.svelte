@@ -102,7 +102,7 @@
 <div class="column-header-row">
   {#each _headers as _header}
     <div
-      class="column-header-cell {header.classes | ''}"
+      class="column-header-cell {header.classes || ''}"
       class:sticky={header.sticky}
       style="width:{_header.width}px">
       <div class="column-header-cell-label">{_header.label || 'N/A'}</div>

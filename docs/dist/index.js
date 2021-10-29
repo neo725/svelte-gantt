@@ -2055,7 +2055,7 @@ function create_each_block(ctx) {
 			t0 = text(t0_value);
 			t1 = space();
 			attr(div0, "class", "column-header-cell-label svelte-12pmj5z");
-			attr(div1, "class", div1_class_value = "column-header-cell " + (/*header*/ ctx[0].classes | "") + " svelte-12pmj5z");
+			attr(div1, "class", div1_class_value = "column-header-cell " + (/*header*/ ctx[0].classes || "") + " svelte-12pmj5z");
 			set_style(div1, "width", /*_header*/ ctx[12].width + "px");
 			toggle_class(div1, "sticky", /*header*/ ctx[0].sticky);
 		},
@@ -2068,7 +2068,7 @@ function create_each_block(ctx) {
 		p(ctx, dirty) {
 			if (dirty & /*_headers*/ 2 && t0_value !== (t0_value = (/*_header*/ ctx[12].label || "N/A") + "")) set_data(t0, t0_value);
 
-			if (dirty & /*header*/ 1 && div1_class_value !== (div1_class_value = "column-header-cell " + (/*header*/ ctx[0].classes | "") + " svelte-12pmj5z")) {
+			if (dirty & /*header*/ 1 && div1_class_value !== (div1_class_value = "column-header-cell " + (/*header*/ ctx[0].classes || "") + " svelte-12pmj5z")) {
 				attr(div1, "class", div1_class_value);
 			}
 
