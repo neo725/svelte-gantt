@@ -53,7 +53,8 @@
         if (_classes.length > 0) {
           _classes += ' '
         }
-        _header.classes += 'sg-table-header-cell-today'
+        _classes += 'sg-table-header-cell-today'
+        _header.classes = _classes
       }
 
       headers.push(_header)

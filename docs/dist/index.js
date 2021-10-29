@@ -2039,7 +2039,7 @@ function get_each_context(ctx, list, i) {
 	return child_ctx;
 }
 
-// (108:2) {#each _headers as _header}
+// (109:2) {#each _headers as _header}
 function create_each_block(ctx) {
 	let div1;
 	let div0;
@@ -2214,7 +2214,8 @@ function instance$4($$self, $$props, $$invalidate) {
 							_classes += " ";
 						}
 
-						_header.classes += "sg-table-header-cell-today";
+						_classes += "sg-table-header-cell-today";
+						_header.classes = _classes;
 					}
 
 					headers.push(_header);
