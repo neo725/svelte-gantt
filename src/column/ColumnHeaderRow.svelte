@@ -44,7 +44,9 @@
         classes: header.classes,
       }
 
-      if (_header.from.isSame(new Date(), 'day')) {
+      let isMarkToday = header['today'] || false
+
+      if (isMarkToday && _header.from.isSame(new Date(), 'day')) {
         _header.label = 'TODAY'
         _header.classes = 'sg-table-header-cell-today'
       }

@@ -2039,7 +2039,7 @@ function get_each_context(ctx, list, i) {
 	return child_ctx;
 }
 
-// (101:2) {#each _headers as _header}
+// (103:2) {#each _headers as _header}
 function create_each_block(ctx) {
 	let div1;
 	let div0;
@@ -2199,7 +2199,9 @@ function instance$4($$self, $$props, $$invalidate) {
 						classes: header.classes
 					};
 
-					if (_header.from.isSame(new Date(), "day")) {
+					let isMarkToday = header["today"] || false;
+
+					if (isMarkToday && _header.from.isSame(new Date(), "day")) {
 						_header.label = "TODAY";
 						_header.classes = "sg-table-header-cell-today";
 					}
