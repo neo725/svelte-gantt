@@ -2857,7 +2857,7 @@ function get_each_context_5(ctx, list, i) {
 	return child_ctx;
 }
 
-// (747:2) {#each ganttTableModules as module}
+// (750:2) {#each ganttTableModules as module}
 function create_each_block_5(ctx) {
 	let switch_instance_anchor;
 	let current;
@@ -2958,7 +2958,7 @@ function create_each_block_5(ctx) {
 	};
 }
 
-// (776:10) {#each $allTimeRanges as timeRange (timeRange.id)}
+// (779:10) {#each $allTimeRanges as timeRange (timeRange.id)}
 function create_each_block_4(key_1, ctx) {
 	let first;
 	let current;
@@ -3007,7 +3007,7 @@ function create_each_block_4(key_1, ctx) {
 	};
 }
 
-// (798:12) {#each visibleRows as row (row.model.id)}
+// (801:12) {#each visibleRows as row (row.model.id)}
 function create_each_block_3(key_1, ctx) {
 	let first;
 	let current;
@@ -3047,7 +3047,7 @@ function create_each_block_3(key_1, ctx) {
 	};
 }
 
-// (804:10) {#each $allTimeRanges as timeRange (timeRange.id)}
+// (807:10) {#each $allTimeRanges as timeRange (timeRange.id)}
 function create_each_block_2(key_1, ctx) {
 	let first;
 	let current;
@@ -3096,7 +3096,7 @@ function create_each_block_2(key_1, ctx) {
 	};
 }
 
-// (808:10) {#each visibleTasks as task (task.model.id)}
+// (811:10) {#each visibleTasks as task (task.model.id)}
 function create_each_block_1(key_1, ctx) {
 	let first;
 	let current;
@@ -3161,7 +3161,7 @@ function create_each_block_1(key_1, ctx) {
 	};
 }
 
-// (818:8) {#each ganttBodyModules as module}
+// (821:8) {#each ganttBodyModules as module}
 function create_each_block$2(ctx) {
 	let switch_instance_anchor;
 	let current;
@@ -3285,6 +3285,8 @@ function create_fragment$7(ctx) {
 	let div8_class_value;
 	let t7;
 	let div13;
+	let t9;
+	let input;
 	let div14_class_value;
 	let current;
 	let mounted;
@@ -3421,6 +3423,8 @@ function create_fragment$7(ctx) {
 			div13.innerHTML = `<div class="sg-table-header sg-table-header-last"><div class="sg-table-header-cell sg-table-cell sg-table-header-cell-last"><div class="btn go-next-day"><i class="fas fa-angle-right"></i></div> 
         <div class="btn go-next-month"><i class="fas fa-angle-double-right"></i></div></div></div>`;
 
+			t9 = space();
+			input = element("input");
 			attr(div0, "class", "header-container svelte-1ny10s5");
 			set_style(div0, "width", /*$_width*/ ctx[23] + "px");
 			attr(div1, "class", "sg-header-scroller svelte-1ny10s5");
@@ -3439,6 +3443,9 @@ function create_fragment$7(ctx) {
 			attr(div8, "class", div8_class_value = "sg-timeline sg-view rows-count-" + /*visibleRows*/ ctx[19].length + " svelte-1ny10s5");
 			toggle_class(div8, "sg-timeline-rows-0", /*noVisibleRows*/ ctx[21]);
 			attr(div13, "class", "sg-table sg-table-last sg-view");
+			attr(input, "type", "file");
+			attr(input, "id", "fileDragToShare");
+			attr(input, "name", "fileSelect[]");
 			attr(div14, "class", div14_class_value = "sg-gantt " + /*classes*/ ctx[4] + " svelte-1ny10s5");
 			toggle_class(div14, "sg-disable-transition", !/*disableTransition*/ ctx[22]);
 		},
@@ -3499,6 +3506,8 @@ function create_fragment$7(ctx) {
 			div7_resize_listener = add_resize_listener(div7, /*div7_elementresize_handler*/ ctx[120].bind(div7));
 			append(div14, t7);
 			append(div14, div13);
+			append(div14, t9);
+			append(div14, input);
 			/*div14_binding*/ ctx[121](div14);
 			current = true;
 
@@ -3979,10 +3988,14 @@ function instance$7($$self, $$props, $$invalidate) {
 		api.registerEvent("tasks", "change");
 		api.registerEvent("tasks", "changed");
 		api.registerEvent("gantt", "viewChanged");
-		api.registerEvent("gantt", "dragStart");
-		api.registerEvent("gantt", "dragOver");
-		api.registerEvent("gantt", "drop");
-		api.registerEvent("gantt", "dragLeave");
+
+		if (window.File && window.FileList && window.FileReader) {
+			api.registerEvent("gantt", "dragStart");
+			api.registerEvent("gantt", "dragOver");
+			api.registerEvent("gantt", "drop");
+			api.registerEvent("gantt", "dragLeave");
+		}
+
 		$$invalidate(84, mounted = true);
 	});
 
