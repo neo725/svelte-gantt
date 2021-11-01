@@ -4,6 +4,7 @@
   import moment from 'moment'
 
   let ganttElement
+  let ganttDragElement
   let mainHeaderContainer
   let mainContainer
   let rowContainer
@@ -755,92 +756,103 @@
   draggable="true"
   bind:this={ganttElement}
   on:click={onEvent}
-  on:mouseover={onEvent}
-  on:dragstart={onDragStart}
-  on:dragover={onDragOver}>
-  {#each ganttTableModules as module}
-    <svelte:component
-      this={module}
-      {rowContainerHeight}
-      {paddingTop}
-      {paddingBottom}
-      {tableWidth}
-      {...$$restProps}
-      on:init={onModuleInit}
-      {visibleRows} />
+  on:mouseover={onEvent}>
+  <form
+    method="post"
+    action=""
+    enctype="multipart/form-data"
+    bind:this={ganttDragElement}
+    on:dragstart={onDragStart}
+    on:dragover={onDragOver}>
+    {#each ganttTableModules as module}
+      <svelte:component
+        this={module}
+        {rowContainerHeight}
+        {paddingTop}
+        {paddingBottom}
+        {tableWidth}
+        {...$$restProps}
+        on:init={onModuleInit}
+        {visibleRows} />
 
-    <!-- <Resizer x={tableWidth} on:resize={onResize} container={ganttElement} /> -->
-  {/each}
-
-  <div
-    class="sg-timeline sg-view rows-count-{visibleRows.length}"
-    class:sg-timeline-rows-0={noVisibleRows}>
+      <!-- <Resizer x={tableWidth} on:resize={onResize} container={ganttElement} /> -->
+    {/each}
     <div
-      class="sg-header"
-      bind:this={mainHeaderContainer}
-      bind:clientHeight={$headerHeight}
-      class:right-scrollbar-visible={rightScrollbarVisible}>
-      <div class="sg-header-scroller" use:horizontalScrollListener>
-        <div class="header-container" style="width:{$_width}px">
-          <ColumnHeader
-            {headers}
-            {columnUnit}
-            {columnOffset}
-            on:dateSelected={onDateSelected} />
-          {#each $allTimeRanges as timeRange (timeRange.id)}
-            <TimeRangeHeader {...timeRange} />
-          {/each}
-        </div>
-      </div>
-    </div>
-
-    <div
-      class="sg-timeline-body"
-      bind:this={mainContainer}
-      use:scrollable
-      class:zooming
-      on:wheel={onwheel}
-      bind:clientHeight={$visibleHeight}
-      bind:clientWidth={$visibleWidth}>
-      <div class="content" style="width:{$_width}px">
-        <Columns {columns} {columnStrokeColor} {columnStrokeWidth} />
-        <div
-          class="sg-rows"
-          bind:this={rowContainer}
-          style="height:{rowContainerHeight}px;">
-          <div style="transform: translateY({paddingTop}px);">
-            {#each visibleRows as row (row.model.id)}
-              <Row {row} />
+      class="sg-timeline sg-view rows-count-{visibleRows.length}"
+      class:sg-timeline-rows-0={noVisibleRows}>
+      <div
+        class="sg-header"
+        bind:this={mainHeaderContainer}
+        bind:clientHeight={$headerHeight}
+        class:right-scrollbar-visible={rightScrollbarVisible}>
+        <div class="sg-header-scroller" use:horizontalScrollListener>
+          <div class="header-container" style="width:{$_width}px">
+            <ColumnHeader
+              {headers}
+              {columnUnit}
+              {columnOffset}
+              on:dateSelected={onDateSelected} />
+            {#each $allTimeRanges as timeRange (timeRange.id)}
+              <TimeRangeHeader {...timeRange} />
             {/each}
           </div>
         </div>
-        <div class="sg-foreground">
-          {#each $allTimeRanges as timeRange (timeRange.id)}
-            <TimeRange {...timeRange} />
-          {/each}
+      </div>
 
-          {#each visibleTasks as task (task.model.id)}
-            <Task
-              model={task.model}
-              left={task.left}
-              width={task.width}
-              height={task.height}
-              top={task.top}
-              {...task} />
+      <div
+        class="sg-timeline-body"
+        bind:this={mainContainer}
+        use:scrollable
+        class:zooming
+        on:wheel={onwheel}
+        bind:clientHeight={$visibleHeight}
+        bind:clientWidth={$visibleWidth}>
+        <div class="content" style="width:{$_width}px">
+          <Columns {columns} {columnStrokeColor} {columnStrokeWidth} />
+          <div
+            class="sg-rows"
+            bind:this={rowContainer}
+            style="height:{rowContainerHeight}px;">
+            <div style="transform: translateY({paddingTop}px);">
+              {#each visibleRows as row (row.model.id)}
+                <Row {row} />
+              {/each}
+            </div>
+          </div>
+          <div class="sg-foreground">
+            {#each $allTimeRanges as timeRange (timeRange.id)}
+              <TimeRange {...timeRange} />
+            {/each}
+
+            {#each visibleTasks as task (task.model.id)}
+              <Task
+                model={task.model}
+                left={task.left}
+                width={task.width}
+                height={task.height}
+                top={task.top}
+                {...task} />
+            {/each}
+          </div>
+          {#each ganttBodyModules as module}
+            <svelte:component
+              this={module}
+              {paddingTop}
+              {paddingBottom}
+              {visibleRows}
+              {...$$restProps}
+              on:init={onModuleInit} />
           {/each}
         </div>
-        {#each ganttBodyModules as module}
-          <svelte:component
-            this={module}
-            {paddingTop}
-            {paddingBottom}
-            {visibleRows}
-            {...$$restProps}
-            on:init={onModuleInit} />
-        {/each}
       </div>
     </div>
-  </div>
+    <input
+      type="file"
+      id="fileDragToShare"
+      style="display: none"
+      name="fileSelect[]" />
+    <input type="submit" style="display: none" />
+  </form>
   <div class="sg-table sg-table-last sg-view">
     <div class="sg-table-header sg-table-header-last">
       <div class="sg-table-header-cell sg-table-cell sg-table-header-cell-last">
@@ -853,9 +865,4 @@
       </div>
     </div>
   </div>
-  <input
-    type="file"
-    id="fileDragToShare"
-    style="display: none"
-    name="fileSelect[]" />
 </div>
