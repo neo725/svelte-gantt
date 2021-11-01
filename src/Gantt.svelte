@@ -401,28 +401,28 @@
   function onDragStart(event) {
     event.stopPropagation()
     event.preventDefault()
-    console.log('Gantt', 'dragstart', event)
+    // console.log('Gantt', 'dragstart', event)
     api.gantt.raise.dragStart()
   }
   function onDragOver(event) {
     event.stopPropagation()
     event.preventDefault()
 
-    console.log('Gantt', 'dragover', event)
+    // console.log('Gantt', 'dragover', event)
     api.gantt.raise.dragOver()
   }
   function onDrop(event) {
     event.stopPropagation()
     event.preventDefault()
 
-    console.log('Gantt', 'drop', event)
+    // console.log('Gantt', 'drop', event)
     api.gantt.raise.drop()
   }
   function onDragLeave(event) {
     event.stopPropagation()
     event.preventDefault()
 
-    console.log('Gantt', 'dragleave', event)
+    // console.log('Gantt', 'dragleave', event)
     api.gantt.raise.dragLeave()
   }
 
@@ -777,11 +777,7 @@
     method="post"
     action=""
     enctype="multipart/form-data"
-    bind:this={ganttDragElement}
-    on:dragstart={onDragStart}
-    on:dragover={onDragOver}
-    on:drop={onDrop}
-    on:dragleave={onDragLeave}>
+    bind:this={ganttDragElement}>
     {#each ganttTableModules as module}
       <svelte:component
         this={module}
