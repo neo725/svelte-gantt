@@ -2857,7 +2857,7 @@ function get_each_context_5(ctx, list, i) {
 	return child_ctx;
 }
 
-// (772:2) {#each ganttTableModules as module}
+// (761:2) {#each ganttTableModules as module}
 function create_each_block_5(ctx) {
 	let switch_instance_anchor;
 	let current;
@@ -2958,7 +2958,7 @@ function create_each_block_5(ctx) {
 	};
 }
 
-// (801:10) {#each $allTimeRanges as timeRange (timeRange.id)}
+// (790:10) {#each $allTimeRanges as timeRange (timeRange.id)}
 function create_each_block_4(key_1, ctx) {
 	let first;
 	let current;
@@ -3007,7 +3007,7 @@ function create_each_block_4(key_1, ctx) {
 	};
 }
 
-// (823:12) {#each visibleRows as row (row.model.id)}
+// (812:12) {#each visibleRows as row (row.model.id)}
 function create_each_block_3(key_1, ctx) {
 	let first;
 	let current;
@@ -3047,7 +3047,7 @@ function create_each_block_3(key_1, ctx) {
 	};
 }
 
-// (829:10) {#each $allTimeRanges as timeRange (timeRange.id)}
+// (818:10) {#each $allTimeRanges as timeRange (timeRange.id)}
 function create_each_block_2(key_1, ctx) {
 	let first;
 	let current;
@@ -3096,7 +3096,7 @@ function create_each_block_2(key_1, ctx) {
 	};
 }
 
-// (833:10) {#each visibleTasks as task (task.model.id)}
+// (822:10) {#each visibleTasks as task (task.model.id)}
 function create_each_block_1(key_1, ctx) {
 	let first;
 	let current;
@@ -3161,7 +3161,7 @@ function create_each_block_1(key_1, ctx) {
 	};
 }
 
-// (843:8) {#each ganttBodyModules as module}
+// (832:8) {#each ganttBodyModules as module}
 function create_each_block$2(ctx) {
 	let switch_instance_anchor;
 	let current;
@@ -3520,10 +3520,8 @@ function create_fragment$7(ctx) {
 					listen(div7, "wheel", /*onwheel*/ ctx[43]),
 					listen(div14, "click", onEvent),
 					listen(div14, "mouseover", onEvent),
-					listen(div14, "dragstart", onEvent),
-					listen(div14, "dragover", onEvent),
-					listen(div14, "drop", onEvent),
-					listen(div14, "dragleave", onEvent)
+					listen(div14, "dragstart", onDragStart),
+					listen(div14, "dragover", onDragOver)
 				];
 
 				mounted = true;
@@ -3769,6 +3767,18 @@ function create_fragment$7(ctx) {
 	};
 }
 
+function onDragStart(event) {
+	event.stopPropagation();
+	event.preventDefault();
+	console.log("Gantt", "dragstart", event);
+}
+
+function onDragOver(event) {
+	event.stopPropagation();
+	event.preventDefault();
+	console.log("Gantt", "dragover", event);
+}
+
 function onModuleInit(module) {
 	
 }
@@ -3991,7 +4001,7 @@ function instance$7($$self, $$props, $$invalidate) {
 		api.registerEvent("tasks", "changed");
 		api.registerEvent("gantt", "viewChanged");
 
-		if (window.File && window.FileList && window.FileReader) {
+		if (window.FileReader) {
 			api.registerEvent("gantt", "dragStart");
 			api.registerEvent("gantt", "dragOver");
 			api.registerEvent("gantt", "drop");
@@ -4021,30 +4031,9 @@ function instance$7($$self, $$props, $$invalidate) {
 		set_store_value(selectedRow, $selectedRow = +data);
 	});
 
-	onDelegatedEvent("dragstart", "gantt", (event, data, target) => {
-		event.stopPropagation();
-		event.preventDefault();
-		console.log("onDelegatedEvent", "dragstart", event, data, target);
-	});
-
-	onDelegatedEvent("drop", "gantt", (event, data, target) => {
-		event.stopPropagation();
-		event.preventDefault();
-		console.log("onDelegatedEvent", "drop", event, data, target);
-	});
-
-	onDelegatedEvent("dragleave", "gantt", (event, data, target) => {
-		event.stopPropagation();
-		event.preventDefault();
-		console.log("onDelegateEvent", "dragleavel", event, data, target);
-	});
-
 	onDestroy(() => {
 		offDelegatedEvent("click", "data-task-id");
 		offDelegatedEvent("click", "data-row-id");
-		offDelegatedEvent("dragstart", "gantt");
-		offDelegatedEvent("drop", "gantt");
-		offDelegatedEvent("dragleave", "gantt");
 	});
 
 	let __scrollTop = 0;

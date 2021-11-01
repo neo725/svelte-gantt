@@ -278,7 +278,7 @@
     api.registerEvent('tasks', 'changed')
     api.registerEvent('gantt', 'viewChanged')
 
-    if (window.File && window.FileList && window.FileReader) {
+    if (window.FileReader) {
       api.registerEvent('gantt', 'dragStart')
       api.registerEvent('gantt', 'dragOver')
       api.registerEvent('gantt', 'drop')
@@ -306,30 +306,21 @@
     $selectedRow = +data
   })
 
-  onDelegatedEvent('dragstart', 'gantt', (event, data, target) => {
+  function onDragStart(event) {
     event.stopPropagation()
     event.preventDefault()
-    console.log('onDelegatedEvent', 'dragstart', event, data, target)
-  })
+    console.log('Gantt', 'dragstart', event)
+  }
+  function onDragOver(event) {
+    event.stopPropagation()
+    event.preventDefault()
 
-  onDelegatedEvent('drop', 'gantt', (event, data, target) => {
-    event.stopPropagation()
-    event.preventDefault()
-    console.log('onDelegatedEvent', 'drop', event, data, target)
-  })
-
-  onDelegatedEvent('dragleave', 'gantt', (event, data, target) => {
-    event.stopPropagation()
-    event.preventDefault()
-    console.log('onDelegateEvent', 'dragleavel', event, data, target)
-  })
+    console.log('Gantt', 'dragover', event)
+  }
 
   onDestroy(() => {
     offDelegatedEvent('click', 'data-task-id')
     offDelegatedEvent('click', 'data-row-id')
-    offDelegatedEvent('dragstart', 'gantt')
-    offDelegatedEvent('drop', 'gantt')
-    offDelegatedEvent('dragleave', 'gantt')
   })
 
   let __scrollTop = 0
@@ -765,10 +756,8 @@
   bind:this={ganttElement}
   on:click={onEvent}
   on:mouseover={onEvent}
-  on:dragstart={onEvent}
-  on:dragover={onEvent}
-  on:drop={onEvent}
-  on:dragleave={onEvent}>
+  on:dragstart={onDragStart}
+  on:dragover={onDragOver}>
   {#each ganttTableModules as module}
     <svelte:component
       this={module}
