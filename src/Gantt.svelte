@@ -277,6 +277,10 @@
     api.registerEvent('tasks', 'change')
     api.registerEvent('tasks', 'changed')
     api.registerEvent('gantt', 'viewChanged')
+    api.registerEvent('gantt', 'dragStart')
+    api.registerEvent('gantt', 'dragOver')
+    api.registerEvent('gantt', 'drop')
+    api.registerEvent('gantt', 'dragLeave')
 
     mounted = true
   })
@@ -735,7 +739,11 @@
   class:sg-disable-transition={!disableTransition}
   bind:this={ganttElement}
   on:click={onEvent}
-  on:mouseover={onEvent}>
+  on:mouseover={onEvent}
+  on:dragstart={onEvent}
+  on:dragover={onEvent}
+  on:drop={onEvent}
+  on:dragleave={onEvent}>
   {#each ganttTableModules as module}
     <svelte:component
       this={module}
@@ -822,10 +830,10 @@
   <div class="sg-table sg-table-last sg-view">
     <div class="sg-table-header sg-table-header-last">
       <div class="sg-table-header-cell sg-table-cell sg-table-header-cell-last">
-        <div class="btn">
+        <div class="btn go-next-day">
           <i class="fas fa-angle-right" />
         </div>
-        <div class="btn">
+        <div class="btn go-next-month">
           <i class="fas fa-angle-double-right" />
         </div>
       </div>
