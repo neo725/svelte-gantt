@@ -307,18 +307,6 @@
     $selectedRow = +data
   })
 
-  function onDragStart(event) {
-    event.stopPropagation()
-    event.preventDefault()
-    console.log('Gantt', 'dragstart', event)
-  }
-  function onDragOver(event) {
-    event.stopPropagation()
-    event.preventDefault()
-
-    console.log('Gantt', 'dragover', event)
-  }
-
   onDestroy(() => {
     offDelegatedEvent('click', 'data-task-id')
     offDelegatedEvent('click', 'data-row-id')
@@ -408,6 +396,34 @@
   function onDateSelected(event) {
     $_from = event.detail.from.clone()
     $_to = event.detail.to.clone()
+  }
+
+  function onDragStart(event) {
+    event.stopPropagation()
+    event.preventDefault()
+    console.log('Gantt', 'dragstart', event)
+    api.gantt.raise.dragStart()
+  }
+  function onDragOver(event) {
+    event.stopPropagation()
+    event.preventDefault()
+
+    console.log('Gantt', 'dragover', event)
+    api.gantt.raise.dragOver()
+  }
+  function onDrop(event) {
+    event.stopPropagation()
+    event.preventDefault()
+
+    console.log('Gantt', 'drop', event)
+    api.gantt.raise.drop()
+  }
+  function onDragLeave(event) {
+    event.stopPropagation()
+    event.preventDefault()
+
+    console.log('Gantt', 'dragleave', event)
+    api.gantt.raise.dragLeave()
   }
 
   function initRows(rowsData) {
@@ -763,7 +779,9 @@
     enctype="multipart/form-data"
     bind:this={ganttDragElement}
     on:dragstart={onDragStart}
-    on:dragover={onDragOver}>
+    on:dragover={onDragOver}
+    on:drop={onDrop}
+    on:dragleave={onDragLeave}>
     {#each ganttTableModules as module}
       <svelte:component
         this={module}
