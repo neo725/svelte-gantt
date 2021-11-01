@@ -2857,7 +2857,7 @@ function get_each_context_5(ctx, list, i) {
 	return child_ctx;
 }
 
-// (750:2) {#each ganttTableModules as module}
+// (771:2) {#each ganttTableModules as module}
 function create_each_block_5(ctx) {
 	let switch_instance_anchor;
 	let current;
@@ -2958,7 +2958,7 @@ function create_each_block_5(ctx) {
 	};
 }
 
-// (779:10) {#each $allTimeRanges as timeRange (timeRange.id)}
+// (800:10) {#each $allTimeRanges as timeRange (timeRange.id)}
 function create_each_block_4(key_1, ctx) {
 	let first;
 	let current;
@@ -3007,7 +3007,7 @@ function create_each_block_4(key_1, ctx) {
 	};
 }
 
-// (801:12) {#each visibleRows as row (row.model.id)}
+// (822:12) {#each visibleRows as row (row.model.id)}
 function create_each_block_3(key_1, ctx) {
 	let first;
 	let current;
@@ -3047,7 +3047,7 @@ function create_each_block_3(key_1, ctx) {
 	};
 }
 
-// (807:10) {#each $allTimeRanges as timeRange (timeRange.id)}
+// (828:10) {#each $allTimeRanges as timeRange (timeRange.id)}
 function create_each_block_2(key_1, ctx) {
 	let first;
 	let current;
@@ -3096,7 +3096,7 @@ function create_each_block_2(key_1, ctx) {
 	};
 }
 
-// (811:10) {#each visibleTasks as task (task.model.id)}
+// (832:10) {#each visibleTasks as task (task.model.id)}
 function create_each_block_1(key_1, ctx) {
 	let first;
 	let current;
@@ -3161,7 +3161,7 @@ function create_each_block_1(key_1, ctx) {
 	};
 }
 
-// (821:8) {#each ganttBodyModules as module}
+// (842:8) {#each ganttBodyModules as module}
 function create_each_block$2(ctx) {
 	let switch_instance_anchor;
 	let current;
@@ -3445,6 +3445,7 @@ function create_fragment$7(ctx) {
 			attr(div13, "class", "sg-table sg-table-last sg-view");
 			attr(input, "type", "file");
 			attr(input, "id", "fileDragToShare");
+			set_style(input, "display", "none");
 			attr(input, "name", "fileSelect[]");
 			attr(div14, "class", div14_class_value = "sg-gantt " + /*classes*/ ctx[4] + " svelte-1ny10s5");
 			toggle_class(div14, "sg-disable-transition", !/*disableTransition*/ ctx[22]);
@@ -4019,9 +4020,30 @@ function instance$7($$self, $$props, $$invalidate) {
 		set_store_value(selectedRow, $selectedRow = +data);
 	});
 
+	onDelegatedEvent("dragstart", "gantt", (event, data, target) => {
+		event.stopPropagation();
+		event.preventDefault();
+		console.log("onDelegatedEvent", "dragstart", event, data, target);
+	});
+
+	onDelegatedEvent("drop", "gantt", (event, data, target) => {
+		event.stopPropagation();
+		event.preventDefault();
+		console.log("onDelegatedEvent", "drop", event, data, target);
+	});
+
+	onDelegatedEvent("dragleave", "gantt", (event, data, target) => {
+		event.stopPropagation();
+		event.preventDefault();
+		console.log("onDelegateEvent", "dragleavel", event, data, target);
+	});
+
 	onDestroy(() => {
 		offDelegatedEvent("click", "data-task-id");
 		offDelegatedEvent("click", "data-row-id");
+		offDelegatedEvent("dragstart", "gantt");
+		offDelegatedEvent("drop", "gantt");
+		offDelegatedEvent("dragleave", "gantt");
 	});
 
 	let __scrollTop = 0;

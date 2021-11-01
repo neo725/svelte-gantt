@@ -306,9 +306,30 @@
     $selectedRow = +data
   })
 
+  onDelegatedEvent('dragstart', 'gantt', (event, data, target) => {
+    event.stopPropagation()
+    event.preventDefault()
+    console.log('onDelegatedEvent', 'dragstart', event, data, target)
+  })
+
+  onDelegatedEvent('drop', 'gantt', (event, data, target) => {
+    event.stopPropagation()
+    event.preventDefault()
+    console.log('onDelegatedEvent', 'drop', event, data, target)
+  })
+
+  onDelegatedEvent('dragleave', 'gantt', (event, data, target) => {
+    event.stopPropagation()
+    event.preventDefault()
+    console.log('onDelegateEvent', 'dragleavel', event, data, target)
+  })
+
   onDestroy(() => {
     offDelegatedEvent('click', 'data-task-id')
     offDelegatedEvent('click', 'data-row-id')
+    offDelegatedEvent('dragstart', 'gantt')
+    offDelegatedEvent('drop', 'gantt')
+    offDelegatedEvent('dragleave', 'gantt')
   })
 
   let __scrollTop = 0
@@ -842,5 +863,9 @@
       </div>
     </div>
   </div>
-  <input type="file" id="fileDragToShare" name="fileSelect[]" />
+  <input
+    type="file"
+    id="fileDragToShare"
+    style="display: none"
+    name="fileSelect[]" />
 </div>
