@@ -3418,8 +3418,8 @@ function create_fragment$7(ctx) {
 			t7 = space();
 			div13 = element("div");
 
-			div13.innerHTML = `<div class="sg-table-header sg-table-header-last"><div class="sg-table-header-cell sg-table-cell sg-table-header-cell-last"><div><i class="fas fa-angle-right"></i></div> 
-        <div><i class="fas fa-angle-double-right"></i></div></div></div>`;
+			div13.innerHTML = `<div class="sg-table-header sg-table-header-last"><div class="sg-table-header-cell sg-table-cell sg-table-header-cell-last"><div class="btn"><i class="fas fa-angle-right"></i></div> 
+        <div class="btn"><i class="fas fa-angle-double-right"></i></div></div></div>`;
 
 			attr(div0, "class", "header-container svelte-1ny10s5");
 			set_style(div0, "width", /*$_width*/ ctx[23] + "px");
