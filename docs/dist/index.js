@@ -2857,7 +2857,7 @@ function get_each_context_5(ctx, list, i) {
 	return child_ctx;
 }
 
-// (771:2) {#each ganttTableModules as module}
+// (772:2) {#each ganttTableModules as module}
 function create_each_block_5(ctx) {
 	let switch_instance_anchor;
 	let current;
@@ -2958,7 +2958,7 @@ function create_each_block_5(ctx) {
 	};
 }
 
-// (800:10) {#each $allTimeRanges as timeRange (timeRange.id)}
+// (801:10) {#each $allTimeRanges as timeRange (timeRange.id)}
 function create_each_block_4(key_1, ctx) {
 	let first;
 	let current;
@@ -3007,7 +3007,7 @@ function create_each_block_4(key_1, ctx) {
 	};
 }
 
-// (822:12) {#each visibleRows as row (row.model.id)}
+// (823:12) {#each visibleRows as row (row.model.id)}
 function create_each_block_3(key_1, ctx) {
 	let first;
 	let current;
@@ -3047,7 +3047,7 @@ function create_each_block_3(key_1, ctx) {
 	};
 }
 
-// (828:10) {#each $allTimeRanges as timeRange (timeRange.id)}
+// (829:10) {#each $allTimeRanges as timeRange (timeRange.id)}
 function create_each_block_2(key_1, ctx) {
 	let first;
 	let current;
@@ -3096,7 +3096,7 @@ function create_each_block_2(key_1, ctx) {
 	};
 }
 
-// (832:10) {#each visibleTasks as task (task.model.id)}
+// (833:10) {#each visibleTasks as task (task.model.id)}
 function create_each_block_1(key_1, ctx) {
 	let first;
 	let current;
@@ -3161,7 +3161,7 @@ function create_each_block_1(key_1, ctx) {
 	};
 }
 
-// (842:8) {#each ganttBodyModules as module}
+// (843:8) {#each ganttBodyModules as module}
 function create_each_block$2(ctx) {
 	let switch_instance_anchor;
 	let current;
@@ -3448,6 +3448,7 @@ function create_fragment$7(ctx) {
 			set_style(input, "display", "none");
 			attr(input, "name", "fileSelect[]");
 			attr(div14, "class", div14_class_value = "sg-gantt " + /*classes*/ ctx[4] + " svelte-1ny10s5");
+			attr(div14, "draggable", "true");
 			toggle_class(div14, "sg-disable-transition", !/*disableTransition*/ ctx[22]);
 		},
 		m(target, anchor) {

@@ -761,6 +761,7 @@
 <div
   class="sg-gantt {classes}"
   class:sg-disable-transition={!disableTransition}
+  draggable="true"
   bind:this={ganttElement}
   on:click={onEvent}
   on:mouseover={onEvent}
