@@ -277,10 +277,13 @@
     api.registerEvent('tasks', 'change')
     api.registerEvent('tasks', 'changed')
     api.registerEvent('gantt', 'viewChanged')
-    api.registerEvent('gantt', 'dragStart')
-    api.registerEvent('gantt', 'dragOver')
-    api.registerEvent('gantt', 'drop')
-    api.registerEvent('gantt', 'dragLeave')
+
+    if (window.File && window.FileList && window.FileReader) {
+      api.registerEvent('gantt', 'dragStart')
+      api.registerEvent('gantt', 'dragOver')
+      api.registerEvent('gantt', 'drop')
+      api.registerEvent('gantt', 'dragLeave')
+    }
 
     mounted = true
   })
@@ -839,4 +842,5 @@
       </div>
     </div>
   </div>
+  <input type="file" id="fileDragToShare" name="fileSelect[]" />
 </div>
